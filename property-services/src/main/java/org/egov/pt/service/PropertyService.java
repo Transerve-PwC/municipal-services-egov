@@ -1,10 +1,11 @@
 package org.egov.pt.service;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.egov.common.contract.request.RequestInfo;
@@ -14,17 +15,20 @@ import org.egov.pt.models.Property;
 import org.egov.pt.models.PropertyCriteria;
 import org.egov.pt.models.enums.CreationReason;
 import org.egov.pt.models.enums.Status;
+import org.egov.pt.models.excel.*;
 import org.egov.pt.models.user.UserDetailResponse;
 import org.egov.pt.models.user.UserSearchRequest;
 import org.egov.pt.models.workflow.State;
 import org.egov.pt.producer.Producer;
-import org.egov.pt.repository.PropertyRepository;
+import org.egov.pt.repository.*;
+import org.egov.pt.repository.rowmapper.LegacyExcelRowMapper;
 import org.egov.pt.util.PTConstants;
 import org.egov.pt.util.PropertyUtil;
 import org.egov.pt.validator.PropertyValidator;
 import org.egov.pt.web.contracts.PropertyRequest;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -34,6 +38,11 @@ import com.google.common.collect.Sets;
 
 @Service
 public class PropertyService {
+	@Autowired
+	private PropertyUtil propertyutil;
+
+	@Autowired
+	private BoundaryService boundaryService;
 
     @Autowired
     private Producer producer;
@@ -66,7 +75,25 @@ public class PropertyService {
 	private CalculationService calculatorService;
 
 
-    
+    @Autowired
+	private ExcelService excelService;
+
+    @Autowired
+	private UserExcelRepository userExcelRepository;
+
+	@Autowired
+	private OwnerExcelRepository ownerExcelRepository;
+	@Autowired
+	private PropertyExcelRepository propertyExcelRepository;
+
+	@Autowired
+	private UnitExcelRepository unitExcelRepository;
+    @Autowired
+	private LegacyExcelRowMapper legacyExcelRowMapper;
+    @Autowired
+	private AddressExcelRepository addressExcelRepository;
+    @Autowired
+	private PropertyPaymentExcelRepository propertyPaymentExcelRepository;
 	/**
 	 * Enriches the Request and pushes to the Queue
 	 *
@@ -338,5 +365,184 @@ public class PropertyService {
 		UserDetailResponse userDetailResponse = userService.getUser(userSearchRequest);
 		util.enrichOwner(userDetailResponse, properties, false);
 		return properties;
+	}
+
+
+	public void importProperties(File file) throws Exception {
+		BufferedReader  br = new BufferedReader(new FileReader(new ClassPathResource("matched.csv").getFile()));
+		String line= "";
+		Map<String, String> matched = new HashMap<>();
+		while ((line = br.readLine()) != null) {
+			String[] values = line.split(",");
+			matched.put(values[0],values[1]);
+		}
+
+		AtomicInteger numOfSuccess = new AtomicInteger();
+		AtomicInteger numOfErrors = new AtomicInteger();
+		excelService.read(file,(RowExcel row)->{
+			LegacyRow legacyRow = null;
+			try {
+				legacyRow = legacyExcelRowMapper.map(row);
+
+				User user = new User();
+				user.setUsername(UUID.randomUUID().toString());
+				user.setMobilenumber(legacyRow.getMobile());
+				user.setPassword("$2a$10$4y05LKmcUfNu2W.QuQZbp.6jTUbDIXOBsnV4MLZfr6pZ1BplakjTa");
+				user.setUuid(UUID.randomUUID().toString());
+				user.setName(legacyRow.getOwnerName());
+				user.setGuardian(legacyRow.getFHName());
+				user.setType("CITIZEN");
+				user.setActive(true);
+				user.setTenantid("up");
+				userExcelRepository.save(user);
+
+				Map<String, String> respone = (Map<String, String>) userService.getToken(user.getUsername(), user.getPassword(), user.getTenantid(), user.getType());
+				String token = (String) respone.get("access_token");
+
+				RequestInfo requestinfo = RequestInfo.builder().authToken(token).action("token")
+						.apiId("Rainmaker").did("1").key("").msgId("20170310130900|en_IN").ver(".01")
+						.userInfo(org.egov.common.contract.request.User.builder().type(user.getType()).tenantId(user.getTenantid()).userName(user.getUsername()).build()).build();
+
+				String pId = propertyutil.getIdList(requestinfo, "up.aligarh", config.getPropertyIdGenName(), config.getPropertyIdGenFormat(), 1).get(0);
+				String ackNo = propertyutil.getIdList(requestinfo, "up.aligarh", config.getAckIdGenName(), config.getAckIdGenFormat(), 1).get(0);
+				//String ackNo = propertyutil.getIdList(requestInfo, tenantId, config.getAckIdGenName(), config.getAckIdGenFormat(), 1).get(0);
+				org.egov.pt.models.excel.Property property = new org.egov.pt.models.excel.Property();
+				property.setId(pId);
+				property.setPropertyid(legacyRow.getPTIN());
+				property.setTenantid("up.aligarh");
+				property.setAccountid(user.getUuid());
+				property.setStatus("APPROVED");
+				property.setAcknowldgementnumber(ackNo);
+				property.setPropertytype("BUILTUP");
+				property.setOwnershipcategory("INDIVIDUAL.SINGLEOWNER");
+				if(matched.containsKey(legacyRow.getPropertyTypeClassification())){
+					property.setUsagecategory(matched.get(legacyRow.getPropertyTypeClassification()));
+				} else {
+					property.setUsagecategory("OTHERS");
+				}
+				//property.setCreationreason()
+				property.setNooffloors(1L);
+				property.setLandarea(BigDecimal.valueOf(Double.valueOf(legacyRow.getPlotArea() != null? legacyRow.getPlotArea():"0")));
+				//property.setSuperbuiltuparea()
+				//property.setLinkedproperties()
+				property.setOldpropertyid(legacyRow.getPTIN());
+				property.setSource("DATA_MIGRATION");
+				property.setChannel("MIGRATION");
+				property.setConstructionyear(legacyRow.getConstructionYear());
+				property.setCreatedby(user.getUuid());
+				property.setLastmodifiedby(user.getUuid());
+				property.setCreatedtime(new Date().getTime());
+				property.setLastmodifiedtime(new Date().getTime());
+				propertyExcelRepository.save(property);
+
+				Owner owner = new Owner();
+				owner.setOwnerinfouuid(UUID.randomUUID().toString());
+				owner.setStatus(Status.ACTIVE.toString());
+				owner.setTenantid("up.aligarh");
+				owner.setPropertyid(property.getId());
+				owner.setUserid(user.getUuid());
+				owner.setOwnertype("NONE");
+				owner.setRelationship("FATHER");
+				owner.setCreatedby(user.getUuid());
+				owner.setLastmodifiedby(user.getUuid());
+				owner.setCreatedtime(new Date().getTime());
+				owner.setLastmodifiedtime(new Date().getTime());
+				ownerExcelRepository.save(owner);
+
+				Unit unit = new Unit();
+				unit.setId(UUID.randomUUID().toString());
+				unit.setTenantid("up.aligarh");
+				unit.setPropertyid(property.getId());
+				unit.setFloorno(1L);
+				if(matched.containsKey(legacyRow.getPropertyTypeClassification())){
+					unit.setUnittype(matched.get(legacyRow.getPropertyTypeClassification()));
+				} else {
+					unit.setUnittype("OTHERS");
+				}
+
+				if(matched.containsKey(legacyRow.getPropertyTypeClassification())){
+				   unit.setUsagecategory(matched.get(legacyRow.getPropertyTypeClassification()));
+				} else {
+					unit.setUsagecategory("OTHERS");
+				}
+				unit.setOccupancytype("SELFOCCUPIED");
+				unit.setOccupancydate(0L);
+				unit.setCarpetarea(BigDecimal.valueOf(Double.valueOf(legacyRow.getTotalCarpetArea() != null? legacyRow.getTotalCarpetArea(): "0" )));
+
+				//unit.setBuiltuparea(BigDecimal builtuparea)
+				//unit.setPlintharea(BigDecimal plintharea)
+				//unit.setSuperbuiltuparea(BigDecimal superbuiltuparea)
+				unit.setArv(BigDecimal.valueOf(Double.valueOf(legacyRow.getRCARV() != null? legacyRow.getRCARV(): "0")));
+
+				unit.setConstructiontype("PUCCA");
+				//unit.setConstructiondate(Long constructiondate)
+				//unit.setDimensions(String dimensions)
+				unit.setActive(true);
+				unit.setCreatedby(user.getUuid());
+				unit.setLastmodifiedby(user.getUuid());
+				unit.setCreatedtime(new Date().getTime());
+				unit.setLastmodifiedtime(new Date().getTime());
+				unitExcelRepository.save(unit);
+
+
+
+				Address address = new Address();
+				address.setTenantid("up.aligarh");
+				address.setId(UUID.randomUUID().toString());
+				address.setPropertyid(property.getId());
+				address.setDoorno(legacyRow.getHouseNo());
+				//address.setPlotno(String plotno)
+				//address.setBuildingname(String buildingname)
+				address.setStreet(legacyRow.getAddress());
+				//address.setLandmark(String landmark)
+				address.setCity(legacyRow.getULBName());
+				address.setPincode("123456");
+				address.setLocality("ALI001");
+				//address.setLocality(legacyRow.getLocality() != null? legacyRow.getLocality(): "OTHERS");
+				address.setDistrict(legacyRow.getULBName());
+				//address.setRegion(String region)
+				address.setState("Uttar Pradesh");
+				address.setCountry("India");
+				//address.setLatitude(BigDecimal latitude)
+				//address.setLongitude(BigDecimal longitude)
+				address.setCreatedby(user.getUuid());
+				address.setLastmodifiedby(user.getUuid());
+				address.setCreatedtime(new Date().getTime());
+				address.setLastmodifiedtime(new Date().getTime());
+				address.setTaxward(legacyRow.getTaxWard());
+				address.setWardname(legacyRow.getWardName());
+				address.setWardno(legacyRow.getWardNo());
+				address.setZone(legacyRow.getZone());
+				addressExcelRepository.save(address);
+				//address.setAdditionaldetails(String additionaldetails)
+
+
+				PropertyPayment payment = new PropertyPayment();
+				payment.setId(UUID.randomUUID().toString());
+				payment.setPropertyid(property.getId());
+				payment.setFinancialyear(legacyRow.getFinancialYear());
+				//payment.setTwelvepercentarv(legacyRow.getT)
+				payment.setArrearhousetax(BigDecimal.valueOf(Double.valueOf(legacyRow.getArrearHouseTax() != null? legacyRow.getArrearHouseTax(): "0")));
+				payment.setArrearwatertax(BigDecimal.valueOf(Double.valueOf(legacyRow.getArrearWaterTax() != null? legacyRow.getArrearWaterTax():"0")));
+				payment.setArrearsewertax(BigDecimal.valueOf(Double.valueOf(legacyRow.getArrearSewerTax() != null? legacyRow.getArrearSewerTax():"0")));
+				payment.setHousetax(BigDecimal.valueOf(Double.valueOf(legacyRow.getHouseTax() != null ? legacyRow.getHouseTax(): "0")));
+				payment.setWatertax(BigDecimal.valueOf(Double.valueOf(legacyRow.getWaterTax() != null ? legacyRow.getWaterTax(): "0")));
+				payment.setSewertax(BigDecimal.valueOf(Double.valueOf(legacyRow.getSewerTax() != null? legacyRow.getSewerTax():"0")));
+				payment.setSurcharehousetax(BigDecimal.valueOf(Double.valueOf(legacyRow.getSurchareHouseTax() != null ? legacyRow.getSurchareHouseTax():"0")));
+				payment.setSurcharewatertax(BigDecimal.valueOf(Double.valueOf(legacyRow.getSurchareWaterTax() != null ? legacyRow.getSurchareWaterTax(): "0")));
+				payment.setSurcharesewertax(BigDecimal.valueOf(Double.valueOf(legacyRow.getSurchareSewerTax() != null ? legacyRow.getSurchareSewerTax():"0")));
+				payment.setBillgeneratedtotal(BigDecimal.valueOf(Double.valueOf(legacyRow.getBillGeneratedTotal() != null ? legacyRow.getBillGeneratedTotal():"0")));
+				payment.setTotalpaidamount(BigDecimal.valueOf(Double.valueOf(legacyRow.getTotalPaidAmount() != null ? legacyRow.getTotalPaidAmount():"0")));
+
+				payment.setLastpaymentdate(legacyRow.getLastPaymentDate());
+				propertyPaymentExcelRepository.save(payment);
+				numOfSuccess.getAndIncrement();
+			} catch (Exception e) {
+				numOfErrors.getAndIncrement();
+				System.out.println("Row["+row.getRowIndex()+"] - ["+legacyRow.toString()+"] -"+e.getMessage());
+			}
+			return true;
+		});
+		System.out.println("Import Completed - Success="+numOfSuccess+" Errors="+numOfErrors);
 	}
 }

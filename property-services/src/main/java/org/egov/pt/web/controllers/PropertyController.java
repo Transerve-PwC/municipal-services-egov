@@ -1,5 +1,6 @@
 package org.egov.pt.web.controllers;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -19,14 +20,11 @@ import org.egov.pt.web.contracts.PropertyRequest;
 import org.egov.pt.web.contracts.PropertyResponse;
 import org.egov.pt.web.contracts.RequestInfoWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.*;
 
 @Controller
 @RequestMapping("/property")
@@ -117,4 +115,14 @@ public class PropertyController {
 //		return new ResponseEntity<>(response, HttpStatus.OK);
 //	}
 
+	@GetMapping("/_import")
+	public ResponseEntity<?> propertyImport() throws Exception {
+		long startTime = System.nanoTime();
+		propertyService.importProperties(new ClassPathResource("legacy.xlsx").getFile());
+		long endtime = System.nanoTime();
+		long elapsetime = endtime - startTime;
+		System.out.println("Elapsed time--->"+elapsetime);
+
+		return new ResponseEntity<>(true, HttpStatus.OK);
+	}
 }
