@@ -2,14 +2,7 @@ package org.egov.pt.service;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.egov.common.contract.request.RequestInfo;
@@ -24,14 +17,25 @@ import org.egov.pt.web.contracts.PropertyRequest;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.util.ObjectUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.web.client.RestTemplate;
+
+import static org.apache.commons.lang3.StringUtils.isEmpty;
 
 @Service
 public class UserService {
+
+    @Autowired
+    private RestTemplate restTemplate;
 
     @Autowired
     private ObjectMapper mapper;
@@ -318,6 +322,31 @@ public class UserService {
         owner.setActive(userDetailResponse.getUser().get(0).getActive());
     }
 
+    public Object getToken(String username, String password, String tenantId, String userType) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+            headers.set("Authorization", "Basic ZWdvdi11c2VyLWNsaWVudDplZ292LXVzZXItc2VjcmV0");
+            MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+            map.add("username", username);
+            if (!isEmpty(password))
+                map.add("password", password);
+            else
+                map.add("password", username);
+            map.add("grant_type", "password");
+            map.add("scope", "read");
+            map.add("tenantId", tenantId);
+            map.add("isInternal", "true");
+            map.add("userType", userType);
+
+            HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<MultiValueMap<String, String>>(map,
+                    headers);
+            return restTemplate.postForEntity(userHost + "/user/oauth/token", request, Map.class).getBody();
+
+        } catch (Exception e) {
+            throw e;
+        }
+    }
 
     /**
      * Updates user if present else creates new user

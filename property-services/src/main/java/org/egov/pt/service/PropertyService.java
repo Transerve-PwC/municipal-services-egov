@@ -393,17 +393,26 @@ public class PropertyService {
 				user.setGuardian(legacyRow.getFHName());
 				user.setType("CITIZEN");
 				user.setActive(true);
-				user.setTenantid("up.aligarh");
+				user.setTenantid("up");
 				userExcelRepository.save(user);
 
+				Map<String, String> respone = (Map<String, String>) userService.getToken(user.getUsername(), user.getPassword(), user.getTenantid(), user.getType());
+				String token = (String) respone.get("access_token");
+
+				RequestInfo requestinfo = RequestInfo.builder().authToken(token).action("token")
+						.apiId("Rainmaker").did("1").key("").msgId("20170310130900|en_IN").ver(".01")
+						.userInfo(org.egov.common.contract.request.User.builder().type(user.getType()).tenantId(user.getTenantid()).userName(user.getUsername()).build()).build();
+
+				String pId = propertyutil.getIdList(requestinfo, "up.aligarh", config.getPropertyIdGenName(), config.getPropertyIdGenFormat(), 1).get(0);
+				String ackNo = propertyutil.getIdList(requestinfo, "up.aligarh", config.getAckIdGenName(), config.getAckIdGenFormat(), 1).get(0);
 				//String ackNo = propertyutil.getIdList(requestInfo, tenantId, config.getAckIdGenName(), config.getAckIdGenFormat(), 1).get(0);
 				org.egov.pt.models.excel.Property property = new org.egov.pt.models.excel.Property();
-				property.setId(UUID.randomUUID().toString());
+				property.setId(pId);
 				property.setPropertyid(legacyRow.getPTIN());
 				property.setTenantid("up.aligarh");
 				property.setAccountid(user.getUuid());
 				property.setStatus("APPROVED");
-				//property.setAcknowldgementnumber();
+				property.setAcknowldgementnumber(ackNo);
 				property.setPropertytype("BUILTUP");
 				property.setOwnershipcategory("INDIVIDUAL.SINGLEOWNER");
 				if(matched.containsKey(legacyRow.getPropertyTypeClassification())){
@@ -416,6 +425,7 @@ public class PropertyService {
 				property.setLandarea(BigDecimal.valueOf(Double.valueOf(legacyRow.getPlotArea() != null? legacyRow.getPlotArea():"0")));
 				//property.setSuperbuiltuparea()
 				//property.setLinkedproperties()
+				property.setOldpropertyid(legacyRow.getPTIN());
 				property.setSource("DATA_MIGRATION");
 				property.setChannel("MIGRATION");
 				property.setConstructionyear(legacyRow.getConstructionYear());
