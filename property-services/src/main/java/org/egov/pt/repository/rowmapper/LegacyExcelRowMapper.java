@@ -4,6 +4,7 @@ import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.egov.pt.models.excel.CellAnnotation;
+import org.egov.pt.models.excel.CellReplaceAnnotation;
 import org.egov.pt.models.excel.LegacyRow;
 import org.egov.pt.models.excel.RowExcel;
 import org.springframework.core.annotation.AnnotationUtils;
@@ -22,11 +23,16 @@ public class LegacyExcelRowMapper {
 		Map<Integer, Cell> cells = source.getCells();
 		for (Field f: LegacyRow.class.getDeclaredFields()) {
 			CellAnnotation column = f.getAnnotation(CellAnnotation.class);
+			CellReplaceAnnotation replaceAnnotation = f.getAnnotation(CellReplaceAnnotation.class);
 			Cell cell  = cells.get(column.index());
 			if(cell != null && cell.getCellType().equals(CellType.STRING)){
-				PropertyUtils.setProperty(row, f.getName(), cell.getStringCellValue());
+				String value = cell.getStringCellValue();
+				if(replaceAnnotation != null) value = value.replaceAll(replaceAnnotation.target(),replaceAnnotation.source());
+				PropertyUtils.setProperty(row, f.getName(), value);
 			} else if(cell != null && cell.getCellType().equals(CellType.NUMERIC)){
-				PropertyUtils.setProperty(row, f.getName(), String.valueOf(cell.getNumericCellValue()));
+				String value = String.valueOf(cell.getNumericCellValue());
+				if(replaceAnnotation != null) value = value.replaceAll(replaceAnnotation.target(),replaceAnnotation.source());
+				PropertyUtils.setProperty(row, f.getName(), value);
 			}
 
 		}
