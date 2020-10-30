@@ -12,7 +12,6 @@ public class PropertyPayment {
     private String id;
     private String propertyid;
     private String financialyear;
-    private String twelvepercentarv;
     private BigDecimal arrearhousetax;
     private BigDecimal arrearwatertax;
     private BigDecimal arrearsewertax;
@@ -26,6 +25,66 @@ public class PropertyPayment {
     private BigDecimal totalpaidamount;
     private String lastpaymentdate;
 
+    public String getId() {
+        return id;
+    }
+
+    public String getPropertyid() {
+        return propertyid;
+    }
+
+    public String getFinancialyear() {
+        return financialyear;
+    }
+
+    public BigDecimal getArrearhousetax() {
+        return arrearhousetax;
+    }
+
+    public BigDecimal getArrearwatertax() {
+        return arrearwatertax;
+    }
+
+    public BigDecimal getArrearsewertax() {
+        return arrearsewertax;
+    }
+
+    public BigDecimal getHousetax() {
+        return housetax;
+    }
+
+    public BigDecimal getWatertax() {
+        return watertax;
+    }
+
+    public BigDecimal getSewertax() {
+        return sewertax;
+    }
+
+    public BigDecimal getSurcharehousetax() {
+        return surcharehousetax;
+    }
+
+    public BigDecimal getSurcharewatertax() {
+        return surcharewatertax;
+    }
+
+    public BigDecimal getSurcharesewertax() {
+        return surcharesewertax;
+    }
+
+    public BigDecimal getBillgeneratedtotal() {
+        return billgeneratedtotal;
+    }
+
+    public BigDecimal getTotalpaidamount() {
+        return totalpaidamount;
+    }
+
+    public String getLastpaymentdate() {
+        return lastpaymentdate;
+    }
+
     public void setId(String id) {
         this.id = id;
     }
@@ -38,9 +97,6 @@ public class PropertyPayment {
         this.financialyear = financialyear;
     }
 
-    public void setTwelvepercentarv(String twelvepercentarv) {
-        this.twelvepercentarv = twelvepercentarv;
-    }
 
     public void setArrearhousetax(BigDecimal arrearhousetax) {
         this.arrearhousetax = arrearhousetax;

@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -368,7 +369,7 @@ public class PropertyService {
 	}
 
 
-	public void importProperties(File file) throws Exception {
+	public void importProperties(File file, Long skip, Long limit) throws Exception {
 		BufferedReader  br = new BufferedReader(new FileReader(new ClassPathResource("matched.csv").getFile()));
 		String line= "";
 		Map<String, String> matched = new HashMap<>();
@@ -379,7 +380,13 @@ public class PropertyService {
 
 		AtomicInteger numOfSuccess = new AtomicInteger();
 		AtomicInteger numOfErrors = new AtomicInteger();
-		excelService.read(file,(RowExcel row)->{
+		Map<String, String> tenantMap = new HashMap<>();
+		tenantMap.put("800768","up.aligarh");
+		tenantMap.put("800866","up.moradabad");
+		tenantMap.put("800682","up.bareilly");
+		tenantMap.put("800630","up.saharanpur");
+
+		excelService.read(file, skip, limit, (RowExcel row)->{
 			LegacyRow legacyRow = null;
 			try {
 				legacyRow = legacyExcelRowMapper.map(row);
@@ -394,6 +401,8 @@ public class PropertyService {
 				user.setType("CITIZEN");
 				user.setActive(true);
 				user.setTenantid("up");
+				user.setCreateddate(new Timestamp(new Date().getTime()));
+				user.setLastmodifieddate(new Timestamp(new Date().getTime()));
 				userExcelRepository.save(user);
 
 				Map<String, String> respone = (Map<String, String>) userService.getToken(user.getUsername(), user.getPassword(), user.getTenantid(), user.getType());
@@ -407,9 +416,9 @@ public class PropertyService {
 				String ackNo = propertyutil.getIdList(requestinfo, "up.aligarh", config.getAckIdGenName(), config.getAckIdGenFormat(), 1).get(0);
 				//String ackNo = propertyutil.getIdList(requestInfo, tenantId, config.getAckIdGenName(), config.getAckIdGenFormat(), 1).get(0);
 				org.egov.pt.models.excel.Property property = new org.egov.pt.models.excel.Property();
-				property.setId(pId);
-				property.setPropertyid(legacyRow.getPTIN());
-				property.setTenantid("up.aligarh");
+				property.setId(UUID.randomUUID().toString());
+				property.setPropertyid(pId);
+				property.setTenantid(tenantMap.get(legacyRow.getULBCode()));
 				property.setAccountid(user.getUuid());
 				property.setStatus("APPROVED");
 				property.setAcknowldgementnumber(ackNo);
@@ -438,7 +447,7 @@ public class PropertyService {
 				Owner owner = new Owner();
 				owner.setOwnerinfouuid(UUID.randomUUID().toString());
 				owner.setStatus(Status.ACTIVE.toString());
-				owner.setTenantid("up.aligarh");
+				owner.setTenantid(tenantMap.get(legacyRow.getULBCode()));
 				owner.setPropertyid(property.getId());
 				owner.setUserid(user.getUuid());
 				owner.setOwnertype("NONE");
@@ -451,7 +460,7 @@ public class PropertyService {
 
 				Unit unit = new Unit();
 				unit.setId(UUID.randomUUID().toString());
-				unit.setTenantid("up.aligarh");
+				unit.setTenantid(tenantMap.get(legacyRow.getULBCode()));
 				unit.setPropertyid(property.getId());
 				unit.setFloorno(1L);
 				if(matched.containsKey(legacyRow.getPropertyTypeClassification())){
@@ -487,7 +496,7 @@ public class PropertyService {
 
 
 				Address address = new Address();
-				address.setTenantid("up.aligarh");
+				address.setTenantid(tenantMap.get(legacyRow.getULBCode()));
 				address.setId(UUID.randomUUID().toString());
 				address.setPropertyid(property.getId());
 				address.setDoorno(legacyRow.getHouseNo());
@@ -521,7 +530,6 @@ public class PropertyService {
 				payment.setId(UUID.randomUUID().toString());
 				payment.setPropertyid(property.getId());
 				payment.setFinancialyear(legacyRow.getFinancialYear());
-				//payment.setTwelvepercentarv(legacyRow.getT)
 				payment.setArrearhousetax(BigDecimal.valueOf(Double.valueOf(legacyRow.getArrearHouseTax() != null? legacyRow.getArrearHouseTax(): "0")));
 				payment.setArrearwatertax(BigDecimal.valueOf(Double.valueOf(legacyRow.getArrearWaterTax() != null? legacyRow.getArrearWaterTax():"0")));
 				payment.setArrearsewertax(BigDecimal.valueOf(Double.valueOf(legacyRow.getArrearSewerTax() != null? legacyRow.getArrearSewerTax():"0")));
