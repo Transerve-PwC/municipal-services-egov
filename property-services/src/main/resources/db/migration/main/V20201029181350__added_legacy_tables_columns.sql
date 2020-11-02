@@ -1,5 +1,5 @@
 ALTER TABLE eg_pt_property
-DROP COLUMN constructionyear;
+DROP COLUMN IF EXISTS constructionyear;
 
 ALTER TABLE eg_pt_property
 ADD COLUMN constructionyear VARCHAR(255);
