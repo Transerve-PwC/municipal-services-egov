@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import com.jayway.jsonpath.JsonPath;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
 import org.egov.mdms.model.MasterDetail;
 import org.egov.mdms.model.MdmsCriteria;
 import org.egov.mdms.model.MdmsCriteriaReq;
@@ -23,9 +24,8 @@ import org.egov.pt.models.PropertyCriteria;
 import org.egov.pt.models.enums.CreationReason;
 import org.egov.pt.models.enums.Status;
 import org.egov.pt.models.excel.*;
-import org.egov.pt.models.user.CreateUserFromLegacyResponse;
+import org.egov.pt.models.user.User;
 import org.egov.pt.models.user.UserDetailResponse;
-import org.egov.pt.models.user.UserLegacy;
 import org.egov.pt.models.user.UserSearchRequest;
 import org.egov.pt.models.workflow.State;
 import org.egov.pt.producer.Producer;
@@ -413,18 +413,22 @@ public class PropertyService {
 						.apiId("Rainmaker").did("1").key("").msgId("20170310130900|en_IN").ver(".01").build();
 
 
-				UserLegacy userRequest = UserLegacy.builder()
-						.active(true)
-						.userName(UUID.randomUUID().toString())
-						.mobileNumber(legacyRow.getMobile())
-						.name(legacyRow.getOwnerName() != null && legacyRow.getOwnerName().length() > 100 ? legacyRow.getOwnerName().substring(0, 99):legacyRow.getOwnerName())
-						.otpReference("123456")
-						.permanentCity(tenantId)
-						.fatherOrHusbandName(legacyRow.getFHName() != null && legacyRow.getFHName().length() > 100 ? legacyRow.getFHName().substring(0, 99):legacyRow.getFHName())
-						.tenantId(tenantId).password("123456").type("CITIZEN").build();
-
-				CreateUserFromLegacyResponse createUserFromLegacyResponse = userService.createUser(userCreateRequestInfo, userRequest);
-				UserLegacy user = createUserFromLegacyResponse.getUser();
+				User userRequest = new User();
+				userRequest.setActive(true);
+				userRequest.setMobileNumber(legacyRow.getMobile());
+				userRequest.setUserName(UUID.randomUUID().toString());
+				userRequest.setPassword("123456");
+				userRequest.setFatherOrHusbandName(legacyRow.getFHName() != null && legacyRow.getFHName().length() > 100 ? legacyRow.getFHName().substring(0, 99):legacyRow.getFHName());
+				userRequest.setType("CITIZEN");
+				userRequest.setTenantId(tenantId);
+				userRequest.setPermanentCity(tenantId);
+				userRequest.setPermanentAddress(legacyRow.getAddress());
+				userRequest.setRoles(Arrays.asList(Role.builder().code("CITIZEN").build()));
+				userRequest.setName(legacyRow.getOwnerName() != null && legacyRow.getOwnerName().length() > 100 ? legacyRow.getOwnerName().substring(0, 99):legacyRow.getOwnerName());
+				userRequest.setCorrespondenceCity(tenantId);
+				userRequest.setCorrespondenceAddress(legacyRow.getAddress());
+				UserDetailResponse userDetailResponse = userService.createUser(userCreateRequestInfo, userRequest);
+				User user = userDetailResponse.getUser().get(0);
 
 				Map<String, String> tokenResponse = (Map<String, String>) userService.getToken(user.getUserName(), "123456", tenantId, user.getType());
 				String token = (String) tokenResponse.get("access_token");

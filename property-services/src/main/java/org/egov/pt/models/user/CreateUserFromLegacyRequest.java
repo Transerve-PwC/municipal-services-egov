@@ -18,7 +18,7 @@ public class CreateUserFromLegacyRequest {
     private RequestInfo requestInfo;
 
     @JsonProperty("user")
-    private UserLegacy user;
+    private User user;
 
     
 }

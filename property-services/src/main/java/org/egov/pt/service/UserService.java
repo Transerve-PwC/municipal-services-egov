@@ -53,8 +53,6 @@ public class UserService {
     @Value("${egov.user.create.path}")
     private String userCreateEndpoint;
 
-    @Value("${egov.user.createwithvalidation.path}")
-    private String userCreateWithValidationEndpoint;
 
     @Value("${egov.user.search.path}")
     private String userSearchEndpoint;
@@ -62,14 +60,10 @@ public class UserService {
     @Value("${egov.user.update.path}")
     private String userUpdateEndpoint;
 
-    public CreateUserFromLegacyResponse createUser(RequestInfo info, UserLegacy user){
-
-        StringBuilder uri = new StringBuilder(userHost).append(userCreateWithValidationEndpoint);
-
-        Optional<Object> response = serviceRequestRepository.fetchResult(uri, new CreateUserFromLegacyRequest(info, user));
-        Map<String, Object> responseMap = (Map<String, Object>)response.get();
-        CreateUserFromLegacyResponse createUserFromLegacyResponse = mapper.convertValue(responseMap,CreateUserFromLegacyResponse.class);
-        return createUserFromLegacyResponse;
+    public UserDetailResponse createUser(RequestInfo info, User user){
+        StringBuilder uri = new StringBuilder(userHost).append(userContextPath).append(userCreateEndpoint);
+        UserDetailResponse userDetailResponse =  userCall(new CreateUserFromLegacyRequest(info, user), uri);
+        return userDetailResponse;
     }
 
     /**
