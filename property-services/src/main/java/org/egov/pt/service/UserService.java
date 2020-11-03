@@ -1,17 +1,18 @@
 package org.egov.pt.service;
 
+import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.pt.models.OwnerInfo;
 import org.egov.pt.models.Property;
-import org.egov.pt.models.user.CreateUserRequest;
-import org.egov.pt.models.user.UserDetailResponse;
-import org.egov.pt.models.user.UserSearchRequest;
+import org.egov.pt.models.excel.LegacyRow;
+import org.egov.pt.models.user.*;
 import org.egov.pt.repository.ServiceRequestRepository;
 import org.egov.pt.web.contracts.PropertyRequest;
 import org.egov.tracer.model.CustomException;
@@ -57,6 +58,16 @@ public class UserService {
 
     @Value("${egov.user.update.path}")
     private String userUpdateEndpoint;
+
+    public CreateUserFromLegacyResponse createUser(RequestInfo info, UserLegacy user){
+
+        StringBuilder uri = new StringBuilder(userHost).append(userContextPath).append(userCreateEndpoint);
+
+        Optional<Object> response = serviceRequestRepository.fetchResult(uri, new CreateUserFromLegacyRequest(info, user));
+        Map<String, Object> responseMap = (Map<String, Object>)response.get();
+        CreateUserFromLegacyResponse createUserFromLegacyResponse = mapper.convertValue(responseMap,CreateUserFromLegacyResponse.class);
+        return createUserFromLegacyResponse;
+    }
 
     /**
      * Creates user of the owners of property if it is not created already
