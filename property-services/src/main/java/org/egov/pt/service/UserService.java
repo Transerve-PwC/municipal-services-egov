@@ -53,20 +53,17 @@ public class UserService {
     @Value("${egov.user.create.path}")
     private String userCreateEndpoint;
 
+
     @Value("${egov.user.search.path}")
     private String userSearchEndpoint;
 
     @Value("${egov.user.update.path}")
     private String userUpdateEndpoint;
 
-    public CreateUserFromLegacyResponse createUser(RequestInfo info, UserLegacy user){
-
+    public UserDetailResponse createUser(RequestInfo info, User user){
         StringBuilder uri = new StringBuilder(userHost).append(userContextPath).append(userCreateEndpoint);
-
-        Optional<Object> response = serviceRequestRepository.fetchResult(uri, new CreateUserFromLegacyRequest(info, user));
-        Map<String, Object> responseMap = (Map<String, Object>)response.get();
-        CreateUserFromLegacyResponse createUserFromLegacyResponse = mapper.convertValue(responseMap,CreateUserFromLegacyResponse.class);
-        return createUserFromLegacyResponse;
+        UserDetailResponse userDetailResponse =  userCall(new CreateUserFromLegacyRequest(info, user), uri);
+        return userDetailResponse;
     }
 
     /**
