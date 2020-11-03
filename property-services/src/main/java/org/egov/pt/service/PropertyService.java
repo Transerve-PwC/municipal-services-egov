@@ -417,10 +417,10 @@ public class PropertyService {
 						.active(true)
 						.userName(UUID.randomUUID().toString())
 						.mobileNumber(legacyRow.getMobile())
-						.name(legacyRow.getOwnerName())
+						.name(legacyRow.getOwnerName() != null && legacyRow.getOwnerName().length() > 100 ? legacyRow.getOwnerName().substring(0, 99):legacyRow.getOwnerName())
 						.otpReference("123456")
 						.permanentCity(tenantId)
-						.fatherOrHusbandName(legacyRow.getFHName())
+						.fatherOrHusbandName(legacyRow.getFHName() != null && legacyRow.getFHName().length() > 100 ? legacyRow.getFHName().substring(0, 99):legacyRow.getFHName())
 						.tenantId(tenantId).password("123456").type("CITIZEN").build();
 
 				CreateUserFromLegacyResponse createUserFromLegacyResponse = userService.createUser(userCreateRequestInfo, userRequest);
