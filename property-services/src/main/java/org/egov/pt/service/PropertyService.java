@@ -23,7 +23,9 @@ import org.egov.pt.models.PropertyCriteria;
 import org.egov.pt.models.enums.CreationReason;
 import org.egov.pt.models.enums.Status;
 import org.egov.pt.models.excel.*;
+import org.egov.pt.models.user.CreateUserFromLegacyResponse;
 import org.egov.pt.models.user.UserDetailResponse;
+import org.egov.pt.models.user.UserLegacy;
 import org.egov.pt.models.user.UserSearchRequest;
 import org.egov.pt.models.workflow.State;
 import org.egov.pt.producer.Producer;
@@ -84,9 +86,6 @@ public class PropertyService {
 
     @Autowired
 	private ExcelService excelService;
-
-    @Autowired
-	private UserExcelRepository userExcelRepository;
 
 	@Autowired
 	private OwnerExcelRepository ownerExcelRepository;
@@ -408,31 +407,32 @@ public class PropertyService {
 			LegacyRow legacyRow = null;
 			try {
 				legacyRow = legacyExcelRowMapper.map(row);
+				String tenantId = "up."+legacyRow.getULBName().toLowerCase();
 
-				User user = new User();
-				user.setUsername(UUID.randomUUID().toString());
-				user.setMobilenumber(legacyRow.getMobile());
-				user.setPassword("$2a$10$4y05LKmcUfNu2W.QuQZbp.6jTUbDIXOBsnV4MLZfr6pZ1BplakjTa");
-				user.setUuid(UUID.randomUUID().toString());
-				user.setName(legacyRow.getOwnerName());
-				user.setGuardian(legacyRow.getFHName());
-				user.setType("CITIZEN");
-				user.setActive(true);
-				user.setTenantid("up");
-				user.setCreateddate(new Timestamp(new Date().getTime()));
-				user.setLastmodifieddate(new Timestamp(new Date().getTime()));
-				userExcelRepository.save(user);
+				RequestInfo userCreateRequestInfo = RequestInfo.builder().action("_create")
+						.apiId("Rainmaker").did("1").key("").msgId("20170310130900|en_IN").ver(".01").build();
 
-				Map<String, String> respone = (Map<String, String>) userService.getToken(user.getUsername(), user.getPassword(), user.getTenantid(), user.getType());
-				String token = (String) respone.get("access_token");
+
+				UserLegacy userRequest = UserLegacy.builder()
+						.active(true)
+						.userName(UUID.randomUUID().toString())
+						.mobileNumber(legacyRow.getMobile())
+						.name(legacyRow.getOwnerName())
+						.otpReference("123456")
+						.permanentCity(tenantId)
+						.fatherOrHusbandName(legacyRow.getFHName())
+						.tenantId(tenantId).password("123456").type("CITIZEN").build();
+
+				CreateUserFromLegacyResponse createUserFromLegacyResponse = userService.createUser(userCreateRequestInfo, userRequest);
+				UserLegacy user = createUserFromLegacyResponse.getUser();
+
+				Map<String, String> tokenResponse = (Map<String, String>) userService.getToken(user.getUserName(), "123456", tenantId, user.getType());
+				String token = (String) tokenResponse.get("access_token");
 
 				RequestInfo requestinfo = RequestInfo.builder().authToken(token).action("token")
 						.apiId("Rainmaker").did("1").key("").msgId("20170310130900|en_IN").ver(".01")
-						.userInfo(org.egov.common.contract.request.User.builder().type(user.getType()).tenantId(user.getTenantid()).userName(user.getUsername()).build()).build();
+						.userInfo(org.egov.common.contract.request.User.builder().type(user.getType()).tenantId("up").userName(user.getUserName()).build()).build();
 
-
-
-				String tenantId = "up."+legacyRow.getULBName().toLowerCase();
 
 				StringBuilder uri = new StringBuilder(config.getMdmsHost()).append(config.getMdmsEndpoint());
 				MdmsCriteriaReq criteriaReq = prepareMdMsRequest(tenantId,"egov-location",Arrays.asList(new String[]{"TenantBoundary"}),"[?(@.hierarchyType.code in [REVENUE])]",requestinfo);
