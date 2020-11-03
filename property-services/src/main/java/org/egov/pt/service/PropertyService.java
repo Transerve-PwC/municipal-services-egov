@@ -7,9 +7,15 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.jayway.jsonpath.JsonPath;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.mdms.model.MasterDetail;
+import org.egov.mdms.model.MdmsCriteria;
+import org.egov.mdms.model.MdmsCriteriaReq;
+import org.egov.mdms.model.ModuleDetail;
 import org.egov.pt.config.PropertyConfiguration;
 import org.egov.pt.models.OwnerInfo;
 import org.egov.pt.models.Property;
@@ -95,6 +101,8 @@ public class PropertyService {
 	private AddressExcelRepository addressExcelRepository;
     @Autowired
 	private PropertyPaymentExcelRepository propertyPaymentExcelRepository;
+	@Autowired
+	private ServiceRequestRepository restRepo;
 	/**
 	 * Enriches the Request and pushes to the Queue
 	 *
@@ -368,8 +376,24 @@ public class PropertyService {
 		return properties;
 	}
 
+	private MdmsCriteriaReq prepareMdMsRequest(String tenantId,String moduleName, List<String> names, String filter, RequestInfo requestInfo) {
 
+		List<MasterDetail> masterDetails = new ArrayList<>();
+
+		names.forEach(name -> {
+			masterDetails.add(MasterDetail.builder().name(name).filter(filter).build());
+		});
+
+		ModuleDetail moduleDetail = ModuleDetail.builder()
+				.moduleName(moduleName).masterDetails(masterDetails).build();
+		List<ModuleDetail> moduleDetails = new ArrayList<>();
+		moduleDetails.add(moduleDetail);
+		MdmsCriteria mdmsCriteria = MdmsCriteria.builder().tenantId(tenantId).moduleDetails(moduleDetails).build();
+		return MdmsCriteriaReq.builder().requestInfo(requestInfo).mdmsCriteria(mdmsCriteria).build();
+	}
 	public void importProperties(File file, Long skip, Long limit) throws Exception {
+
+
 		BufferedReader  br = new BufferedReader(new FileReader(new ClassPathResource("matched.csv").getFile()));
 		String line= "";
 		Map<String, String> matched = new HashMap<>();
@@ -380,12 +404,6 @@ public class PropertyService {
 
 		AtomicInteger numOfSuccess = new AtomicInteger();
 		AtomicInteger numOfErrors = new AtomicInteger();
-		Map<String, String> tenantMap = new HashMap<>();
-		tenantMap.put("800768","up.aligarh");
-		tenantMap.put("800866","up.moradabad");
-		tenantMap.put("800682","up.bareilly");
-		tenantMap.put("800630","up.saharanpur");
-
 		excelService.read(file, skip, limit, (RowExcel row)->{
 			LegacyRow legacyRow = null;
 			try {
@@ -412,13 +430,30 @@ public class PropertyService {
 						.apiId("Rainmaker").did("1").key("").msgId("20170310130900|en_IN").ver(".01")
 						.userInfo(org.egov.common.contract.request.User.builder().type(user.getType()).tenantId(user.getTenantid()).userName(user.getUsername()).build()).build();
 
-				String pId = propertyutil.getIdList(requestinfo, "up.aligarh", config.getPropertyIdGenName(), config.getPropertyIdGenFormat(), 1).get(0);
-				String ackNo = propertyutil.getIdList(requestinfo, "up.aligarh", config.getAckIdGenName(), config.getAckIdGenFormat(), 1).get(0);
+
+
+				String tenantId = "up."+legacyRow.getULBName().toLowerCase();
+
+				StringBuilder uri = new StringBuilder(config.getMdmsHost()).append(config.getMdmsEndpoint());
+				MdmsCriteriaReq criteriaReq = prepareMdMsRequest(tenantId,"egov-location",Arrays.asList(new String[]{"TenantBoundary"}),"[?(@.hierarchyType.code in [REVENUE])]",requestinfo);
+				Optional<Object> response = restRepo.fetchResult(uri, criteriaReq);
+
+				List<Map<String, String>> boundaries = JsonPath.read(response.get(), "$..[?(@.name=='"+legacyRow.getLocality()+"')]");
+
+				String localityCode = "";
+				if(boundaries.size() > 0){
+					Map<String, String> boundary = boundaries.get(0);
+					localityCode = boundary.get("code");
+				}
+
+
+				String pId = propertyutil.getIdList(requestinfo, tenantId, config.getPropertyIdGenName(), config.getPropertyIdGenFormat(), 1).get(0);
+				String ackNo = propertyutil.getIdList(requestinfo, tenantId, config.getAckIdGenName(), config.getAckIdGenFormat(), 1).get(0);
 				//String ackNo = propertyutil.getIdList(requestInfo, tenantId, config.getAckIdGenName(), config.getAckIdGenFormat(), 1).get(0);
 				org.egov.pt.models.excel.Property property = new org.egov.pt.models.excel.Property();
 				property.setId(UUID.randomUUID().toString());
 				property.setPropertyid(pId);
-				property.setTenantid(tenantMap.get(legacyRow.getULBCode()));
+				property.setTenantid(tenantId);
 				property.setAccountid(user.getUuid());
 				property.setStatus("APPROVED");
 				property.setAcknowldgementnumber(ackNo);
@@ -447,7 +482,7 @@ public class PropertyService {
 				Owner owner = new Owner();
 				owner.setOwnerinfouuid(UUID.randomUUID().toString());
 				owner.setStatus(Status.ACTIVE.toString());
-				owner.setTenantid(tenantMap.get(legacyRow.getULBCode()));
+				owner.setTenantid(tenantId);
 				owner.setPropertyid(property.getId());
 				owner.setUserid(user.getUuid());
 				owner.setOwnertype("NONE");
@@ -460,7 +495,7 @@ public class PropertyService {
 
 				Unit unit = new Unit();
 				unit.setId(UUID.randomUUID().toString());
-				unit.setTenantid(tenantMap.get(legacyRow.getULBCode()));
+				unit.setTenantid(tenantId);
 				unit.setPropertyid(property.getId());
 				unit.setFloorno(1L);
 				if(matched.containsKey(legacyRow.getPropertyTypeClassification())){
@@ -470,7 +505,7 @@ public class PropertyService {
 				}
 
 				if(matched.containsKey(legacyRow.getPropertyTypeClassification())){
-				   unit.setUsagecategory(matched.get(legacyRow.getPropertyTypeClassification()));
+					unit.setUsagecategory(matched.get(legacyRow.getPropertyTypeClassification()));
 				} else {
 					unit.setUsagecategory("OTHERS");
 				}
@@ -496,7 +531,7 @@ public class PropertyService {
 
 
 				Address address = new Address();
-				address.setTenantid(tenantMap.get(legacyRow.getULBCode()));
+				address.setTenantid(tenantId);
 				address.setId(UUID.randomUUID().toString());
 				address.setPropertyid(property.getId());
 				address.setDoorno(legacyRow.getHouseNo());
@@ -506,7 +541,7 @@ public class PropertyService {
 				//address.setLandmark(String landmark)
 				address.setCity(legacyRow.getULBName());
 				address.setPincode("123456");
-				address.setLocality("ALI001");
+				address.setLocality(localityCode);
 				//address.setLocality(legacyRow.getLocality() != null? legacyRow.getLocality(): "OTHERS");
 				address.setDistrict(legacyRow.getULBName());
 				//address.setRegion(String region)
