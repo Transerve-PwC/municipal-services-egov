@@ -3,6 +3,7 @@ package org.egov.pt.service;
 import java.io.*;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -46,6 +47,9 @@ import com.google.common.collect.Sets;
 
 @Service
 public class PropertyService {
+
+	private static DecimalFormat df = new DecimalFormat("0.00");
+
 	@Autowired
 	private PropertyUtil propertyutil;
 
@@ -422,7 +426,10 @@ public class PropertyService {
 				userRequest.setPermanentCity(tenantId);
 				userRequest.setPermanentAddress(legacyRow.getAddress());
 				userRequest.setRoles(Arrays.asList(Role.builder().code("CITIZEN").build()));
-				userRequest.setName(legacyRow.getOwnerName() != null && legacyRow.getOwnerName().length() > 100 ? legacyRow.getOwnerName().substring(0, 99):legacyRow.getOwnerName());
+				String name = legacyRow.getOwnerName() != null && legacyRow.getOwnerName() != "" ? legacyRow.getOwnerName(): "Owner of "+legacyRow.getPTIN();
+				name = name.length() > 100 ? name.substring(0, 99):name;
+
+				userRequest.setName(name);
 				userRequest.setCorrespondenceCity(tenantId);
 				userRequest.setCorrespondenceAddress(legacyRow.getAddress());
 				UserDetailResponse userDetailResponse = userService.createUser(userCreateRequestInfo, userRequest);
@@ -468,7 +475,7 @@ public class PropertyService {
 				}
 				//property.setCreationreason()
 				property.setNooffloors(1L);
-				property.setLandarea(BigDecimal.valueOf(Double.valueOf(legacyRow.getPlotArea() != null? legacyRow.getPlotArea():"0")));
+				property.setLandarea(BigDecimal.valueOf(fixDecimalPlacesCount(Double.valueOf(legacyRow.getPlotArea() != null? legacyRow.getPlotArea():"0"))));
 				//property.setSuperbuiltuparea()
 				//property.setLinkedproperties()
 				property.setOldpropertyid(legacyRow.getPTIN());
@@ -513,13 +520,13 @@ public class PropertyService {
 				}
 				unit.setOccupancytype("SELFOCCUPIED");
 				unit.setOccupancydate(0L);
-				unit.setCarpetarea(BigDecimal.valueOf(Double.valueOf(legacyRow.getTotalCarpetArea() != null? legacyRow.getTotalCarpetArea(): "0" )));
+				unit.setCarpetarea(BigDecimal.valueOf(fixDecimalPlacesCount(Double.valueOf(legacyRow.getTotalCarpetArea() != null? legacyRow.getTotalCarpetArea(): "0" ))));
 
 				//unit.setBuiltuparea(BigDecimal builtuparea)
 				//unit.setPlintharea(BigDecimal plintharea)
 				//unit.setSuperbuiltuparea(BigDecimal superbuiltuparea)
-				unit.setArv(BigDecimal.valueOf(Double.valueOf(legacyRow.getRCARV() != null? legacyRow.getRCARV(): "0")));
-
+				unit.setArv(BigDecimal.valueOf(fixDecimalPlacesCount(Double.valueOf(legacyRow.getRCARV() != null? legacyRow.getRCARV(): "0"))));
+				Double.parseDouble("9.78313E+2");
 				unit.setConstructiontype("PUCCA");
 				//unit.setConstructiondate(Long constructiondate)
 				//unit.setDimensions(String dimensions)
@@ -567,17 +574,17 @@ public class PropertyService {
 				payment.setId(UUID.randomUUID().toString());
 				payment.setPropertyid(property.getId());
 				payment.setFinancialyear(legacyRow.getFinancialYear());
-				payment.setArrearhousetax(BigDecimal.valueOf(Double.valueOf(legacyRow.getArrearHouseTax() != null? legacyRow.getArrearHouseTax(): "0")));
-				payment.setArrearwatertax(BigDecimal.valueOf(Double.valueOf(legacyRow.getArrearWaterTax() != null? legacyRow.getArrearWaterTax():"0")));
-				payment.setArrearsewertax(BigDecimal.valueOf(Double.valueOf(legacyRow.getArrearSewerTax() != null? legacyRow.getArrearSewerTax():"0")));
-				payment.setHousetax(BigDecimal.valueOf(Double.valueOf(legacyRow.getHouseTax() != null ? legacyRow.getHouseTax(): "0")));
-				payment.setWatertax(BigDecimal.valueOf(Double.valueOf(legacyRow.getWaterTax() != null ? legacyRow.getWaterTax(): "0")));
-				payment.setSewertax(BigDecimal.valueOf(Double.valueOf(legacyRow.getSewerTax() != null? legacyRow.getSewerTax():"0")));
-				payment.setSurcharehousetax(BigDecimal.valueOf(Double.valueOf(legacyRow.getSurchareHouseTax() != null ? legacyRow.getSurchareHouseTax():"0")));
-				payment.setSurcharewatertax(BigDecimal.valueOf(Double.valueOf(legacyRow.getSurchareWaterTax() != null ? legacyRow.getSurchareWaterTax(): "0")));
-				payment.setSurcharesewertax(BigDecimal.valueOf(Double.valueOf(legacyRow.getSurchareSewerTax() != null ? legacyRow.getSurchareSewerTax():"0")));
-				payment.setBillgeneratedtotal(BigDecimal.valueOf(Double.valueOf(legacyRow.getBillGeneratedTotal() != null ? legacyRow.getBillGeneratedTotal():"0")));
-				payment.setTotalpaidamount(BigDecimal.valueOf(Double.valueOf(legacyRow.getTotalPaidAmount() != null ? legacyRow.getTotalPaidAmount():"0")));
+				payment.setArrearhousetax(BigDecimal.valueOf(fixDecimalPlacesCount(Double.valueOf(legacyRow.getArrearHouseTax() != null? legacyRow.getArrearHouseTax(): "0"))));
+				payment.setArrearwatertax(BigDecimal.valueOf(fixDecimalPlacesCount(Double.valueOf(legacyRow.getArrearWaterTax() != null? legacyRow.getArrearWaterTax():"0"))));
+				payment.setArrearsewertax(BigDecimal.valueOf(fixDecimalPlacesCount(Double.valueOf(legacyRow.getArrearSewerTax() != null? legacyRow.getArrearSewerTax():"0"))));
+				payment.setHousetax(BigDecimal.valueOf(fixDecimalPlacesCount(Double.valueOf(legacyRow.getHouseTax() != null ? legacyRow.getHouseTax(): "0"))));
+				payment.setWatertax(BigDecimal.valueOf(fixDecimalPlacesCount(Double.valueOf(legacyRow.getWaterTax() != null ? legacyRow.getWaterTax(): "0"))));
+				payment.setSewertax(BigDecimal.valueOf(fixDecimalPlacesCount(Double.valueOf(legacyRow.getSewerTax() != null? legacyRow.getSewerTax():"0"))));
+				payment.setSurcharehousetax(BigDecimal.valueOf(fixDecimalPlacesCount(Double.valueOf(legacyRow.getSurchareHouseTax() != null ? legacyRow.getSurchareHouseTax():"0"))));
+				payment.setSurcharewatertax(BigDecimal.valueOf(fixDecimalPlacesCount(Double.valueOf(legacyRow.getSurchareWaterTax() != null ? legacyRow.getSurchareWaterTax(): "0"))));
+				payment.setSurcharesewertax(BigDecimal.valueOf(fixDecimalPlacesCount(Double.valueOf(legacyRow.getSurchareSewerTax() != null ? legacyRow.getSurchareSewerTax():"0"))));
+				payment.setBillgeneratedtotal(BigDecimal.valueOf(fixDecimalPlacesCount(Double.valueOf(legacyRow.getBillGeneratedTotal() != null ? legacyRow.getBillGeneratedTotal():"0"))));
+				payment.setTotalpaidamount(BigDecimal.valueOf(fixDecimalPlacesCount(Double.valueOf(legacyRow.getTotalPaidAmount() != null ? legacyRow.getTotalPaidAmount():"0"))));
 
 				payment.setLastpaymentdate(legacyRow.getLastPaymentDate());
 				propertyPaymentExcelRepository.save(payment);
@@ -597,5 +604,17 @@ public class PropertyService {
 			curPtin = "0"+curPtin;
 		}
 		return "9"+curPtin;
+	}
+
+	private double fixDecimalPlacesCount(double number){
+		if(getDecimalPlacesCount(String.valueOf(number)) > 2){
+			return Double.parseDouble(String.valueOf(number));
+		}
+		return number;
+	}
+	private int getDecimalPlacesCount(String number){
+		String[] div = number.toString().split("\\.");
+		div[0].length();   // Before Decimal Count
+		return div[1].length();
 	}
 }

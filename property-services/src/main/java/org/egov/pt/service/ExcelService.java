@@ -42,5 +42,6 @@ public class ExcelService {
                 if(limit != null && r.getRowNum()+2 >= limit) break;
             }
         }
+        workbook.close();
     }
 }
