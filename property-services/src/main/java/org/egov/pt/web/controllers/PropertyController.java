@@ -115,7 +115,7 @@ public class PropertyController {
 //		return new ResponseEntity<>(response, HttpStatus.OK);
 //	}
 
-	@GetMapping("/_import")
+	@PostMapping("/_import")
 	public ResponseEntity<?> propertyImport(@RequestParam(required = false) Long limit, @RequestParam(required = false, defaultValue = "1") Long skip) throws Exception {
 		long startTime = System.nanoTime();
 		propertyService.importProperties(new ClassPathResource("legacy-bareilly.xlsx").getFile(), skip, limit);
