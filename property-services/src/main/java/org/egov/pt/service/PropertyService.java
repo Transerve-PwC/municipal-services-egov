@@ -526,7 +526,6 @@ public class PropertyService {
 				//unit.setPlintharea(BigDecimal plintharea)
 				//unit.setSuperbuiltuparea(BigDecimal superbuiltuparea)
 				unit.setArv(BigDecimal.valueOf(fixDecimalPlacesCount(Double.valueOf(legacyRow.getRCARV() != null? legacyRow.getRCARV(): "0"))));
-				Double.parseDouble("9.78313E+2");
 				unit.setConstructiontype("PUCCA");
 				//unit.setConstructiondate(Long constructiondate)
 				//unit.setDimensions(String dimensions)
