@@ -415,7 +415,7 @@ public class PropertyService {
 
 				User userRequest = new User();
 				userRequest.setActive(true);
-				userRequest.setMobileNumber(legacyRow.getMobile());
+				userRequest.setMobileNumber(legacyRow.getMobile() != null && legacyRow.getMobile() != "" ? legacyRow.getMobile(): convertPTINToMobileNumber("9"+legacyRow.getPTIN()));
 				userRequest.setUserName(UUID.randomUUID().toString());
 				userRequest.setPassword("123456");
 				userRequest.setFatherOrHusbandName(legacyRow.getFHName() != null && legacyRow.getFHName().length() > 100 ? legacyRow.getFHName().substring(0, 99):legacyRow.getFHName());
@@ -591,5 +591,13 @@ public class PropertyService {
 			return true;
 		});
 		System.out.println("Import Completed - Success="+numOfSuccess+" Errors="+numOfErrors);
+	}
+
+	private String convertPTINToMobileNumber(String ptin){
+		String curPtin = ptin;
+		while(curPtin.length() < 9){
+			curPtin = "0"+curPtin;
+		}
+		return "9"+curPtin;
 	}
 }

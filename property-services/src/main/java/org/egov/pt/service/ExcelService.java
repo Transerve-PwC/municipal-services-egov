@@ -23,24 +23,24 @@ public class ExcelService {
         for (Sheet sheet: workbook) {
             Map<Integer, String> headerMap = new HashMap<Integer, String>();
             Iterator<Row> itr =  sheet.rowIterator();
+            Row r = itr.next();
+            for (Cell cell: r) {
+                headerMap.put(cell.getColumnIndex(), cell.getStringCellValue());
+            }
 
             while(itr.hasNext()){
-                Row r = itr.next();
-                while ( (skip != null && r.getRowNum() <=skip)) { if(itr.hasNext()) r= itr.next();}
-                if(limit != null && r.getRowNum() >= limit) break;
+                while ( (skip != null && r.getRowNum()+2 <=skip)) { if(itr.hasNext()) r= itr.next();}
+
+                if(itr.hasNext()) r = itr.next();
+
                 if(r.getPhysicalNumberOfCells() <= 0) break;
                 Map<Integer, Cell> cellMap = new HashMap<Integer, Cell>();
-                if(r.getRowNum() == 0) {
-                    for (Cell cell: r) {
-                        headerMap.put(cell.getColumnIndex(), cell.getStringCellValue());
-                    }
-                } else {
-                    for (Cell cell: r) {
-                        cellMap.put(cell.getColumnIndex(),cell);
-                    }
+                for (Cell cell: r) {
+                    cellMap.put(cell.getColumnIndex(),cell);
                 }
-                if(r.getRowNum() > 0) func.apply(RowExcel.builder().rowIndex(r.getRowNum()).cells(cellMap).header(headerMap).build());
+                if(r.getRowNum() > 0) func.apply(RowExcel.builder().rowIndex(r.getRowNum()+1).cells(cellMap).header(headerMap).build());
 
+                if(limit != null && r.getRowNum()+2 >= limit) break;
             }
         }
     }
