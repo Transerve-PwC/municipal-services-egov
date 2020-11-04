@@ -1,8 +1,6 @@
 package org.egov.pt.service;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
+import java.io.*;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.*;
@@ -35,6 +33,7 @@ import org.egov.pt.util.PTConstants;
 import org.egov.pt.util.PropertyUtil;
 import org.egov.pt.validator.PropertyValidator;
 import org.egov.pt.web.contracts.PropertyRequest;
+import org.egov.pt.web.controllers.PropertyController;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
@@ -390,10 +389,9 @@ public class PropertyService {
 		MdmsCriteria mdmsCriteria = MdmsCriteria.builder().tenantId(tenantId).moduleDetails(moduleDetails).build();
 		return MdmsCriteriaReq.builder().requestInfo(requestInfo).mdmsCriteria(mdmsCriteria).build();
 	}
-	public void importProperties(File file, Long skip, Long limit) throws Exception {
+	public void importProperties(InputStream file, InputStream matchedFile, Long skip, Long limit) throws Exception {
 
-
-		BufferedReader  br = new BufferedReader(new FileReader(new ClassPathResource("matched.csv").getFile()));
+		BufferedReader  br = new BufferedReader(new InputStreamReader(matchedFile));
 		String line= "";
 		Map<String, String> matched = new HashMap<>();
 		while ((line = br.readLine()) != null) {

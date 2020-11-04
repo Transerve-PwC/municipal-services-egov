@@ -17,8 +17,7 @@ import java.util.function.Function;
 public class ExcelService {
 
 
-    public void read(File file, Long skip, Long limit, Function<RowExcel, Boolean> func) throws Exception{
-        InputStream is = new FileInputStream(file);
+    public void read(InputStream is, Long skip, Long limit, Function<RowExcel, Boolean> func) throws Exception{
         Workbook workbook = StreamingReader.builder().rowCacheSize(100).bufferSize(4096).open(is);
         for (Sheet sheet: workbook) {
             Map<Integer, String> headerMap = new HashMap<Integer, String>();

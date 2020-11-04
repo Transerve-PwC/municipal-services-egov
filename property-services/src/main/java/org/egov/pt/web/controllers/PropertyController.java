@@ -1,6 +1,7 @@
 package org.egov.pt.web.controllers;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +30,9 @@ import org.springframework.web.bind.annotation.*;
 @Controller
 @RequestMapping("/property")
 public class PropertyController {
+
+
+	final ClassLoader loader = PropertyController.class.getClassLoader();
 
 	@Autowired
 	private PropertyService propertyService;
@@ -118,7 +122,9 @@ public class PropertyController {
 	@PostMapping("/_import")
 	public ResponseEntity<?> propertyImport(@RequestParam(required = false) Long limit, @RequestParam(required = false, defaultValue = "1") Long skip) throws Exception {
 		long startTime = System.nanoTime();
-		propertyService.importProperties(new ClassPathResource("legacy-bareilly.xlsx").getFile(), skip, limit);
+		final InputStream excelFile = loader.getResourceAsStream("legacy-bareilly.xlsx");
+		final InputStream matchedFile = loader.getResourceAsStream("matched.csv");
+		propertyService.importProperties(excelFile, matchedFile, skip, limit);
 		long endtime = System.nanoTime();
 		long elapsetime = endtime - startTime;
 		System.out.println("Elapsed time--->"+elapsetime);
