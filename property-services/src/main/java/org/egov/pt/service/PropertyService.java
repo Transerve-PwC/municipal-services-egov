@@ -48,7 +48,6 @@ import com.google.common.collect.Sets;
 @Service
 public class PropertyService {
 
-	private static DecimalFormat df = new DecimalFormat("0.0");
 
 	@Autowired
 	private PropertyUtil propertyutil;
