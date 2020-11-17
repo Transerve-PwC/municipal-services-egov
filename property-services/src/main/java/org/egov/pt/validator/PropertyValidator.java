@@ -27,6 +27,7 @@ import org.egov.pt.models.workflow.State;
 import org.egov.pt.service.DiffService;
 import org.egov.pt.service.PropertyService;
 import org.egov.pt.service.WorkflowService;
+import org.egov.pt.util.CommonUtils;
 import  org.egov.pt.util.PTConstants;
 import org.egov.pt.util.PropertyUtil;
 import org.egov.pt.web.contracts.PropertyRequest;
@@ -548,9 +549,13 @@ public class PropertyValidator {
 				&& CollectionUtils.isEmpty(criteria.getPropertyIds())
 				&& CollectionUtils.isEmpty(criteria.getOwnerIds())
 				&& CollectionUtils.isEmpty(criteria.getUuids())
-				&& null == criteria.getMobileNumber()
-				&& null == criteria.getName();
-
+				&& CommonUtils.isNullOrEmptyString(criteria.getStreet())
+				&& CommonUtils.isNullOrEmptyString(criteria.getName())
+				&& CommonUtils.isNullOrEmptyString(criteria.getMobileNumber())
+				&& CommonUtils.isNullOrEmptyString(criteria.getDoorNo());
+				 
+		
+		
 		if (isUserCitizen) {
 
 			if (isCriteriaEmpty)
@@ -576,6 +581,13 @@ public class PropertyValidator {
         if(criteria.getMobileNumber()!=null && !allowedParams.contains("mobileNumber"))
             throw new CustomException("EG_PT_INVALID_SEARCH","Search based on mobileNumber is not available for : " + userType);
 
+        if(criteria.getStreet()!=null && !allowedParams.contains("street"))
+            throw new CustomException("EG_PT_INVALID_SEARCH","Search based on street is not available for : " + userType);
+        
+        if(criteria.getDoorNo()!=null && !allowedParams.contains("doorNo"))
+            throw new CustomException("EG_PT_INVALID_SEARCH","Search based on doorNo is not available for : " + userType);
+        
+        
         if(!CollectionUtils.isEmpty(criteria.getPropertyIds()) && !allowedParams.contains("ids"))
             throw new CustomException("EG_PT_INVALID_SEARCH","Search based on ids is not available for : " + userType);
 
