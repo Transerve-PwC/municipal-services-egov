@@ -192,4 +192,11 @@ public class CommonUtils {
 		}
 		return mainNode;
 	}
+	
+	public static boolean isNullOrEmptyString(String str) {
+        if(str != null && !str.isEmpty())
+            return false;
+        return true;
+    }
+	
 }

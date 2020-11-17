@@ -6,6 +6,7 @@ import java.util.Set;
 import org.egov.pt.config.PropertyConfiguration;
 import org.egov.pt.models.PropertyCriteria;
 import org.egov.tracer.model.CustomException;
+import  org.egov.pt.util.CommonUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -122,9 +123,10 @@ public class PropertyQueryBuilder {
 					&& CollectionUtils.isEmpty(criteria.getAcknowledgementIds())
 					&& CollectionUtils.isEmpty(criteria.getOldpropertyids())
 					&& CollectionUtils.isEmpty(criteria.getUuids())
-					&& null == criteria.getMobileNumber()
-					&& null == criteria.getName();
-		
+					&& CommonUtils.isNullOrEmptyString(criteria.getMobileNumber())
+					&& CommonUtils.isNullOrEmptyString(criteria.getDoorNo())//Added this
+					&& CommonUtils.isNullOrEmptyString(criteria.getLocality())//Added this
+					&& CommonUtils.isNullOrEmptyString(criteria.getName());//Added this
 		if(isEmpty)
 			throw new CustomException("EG_PT_SEARCH_ERROR"," No criteria given for the property search");
 		
@@ -146,14 +148,41 @@ public class PropertyQueryBuilder {
 			appendAndQuery= true;
 		}
 		
-		if (null != criteria.getLocality()) {
+		/*
+		 * if (null != criteria.getLocality()) {
+		 * 
+		 * if(appendAndQuery) builder.append(AND_QUERY);
+		 * builder.append("address.locality = ?");
+		 * preparedStmtList.add(criteria.getLocality()); appendAndQuery= true; }
+		 */
+		//==========================================================================
+		if (CommonUtils.isNullOrEmptyString(criteria.getLocality())) {
 
 			if(appendAndQuery)
 				builder.append(AND_QUERY);
-			builder.append("address.locality = ?");
-			preparedStmtList.add(criteria.getLocality());
+			builder.append("address.locality like ?");
+			preparedStmtList.add("%" +criteria.getLocality() + "%" );
 			appendAndQuery= true;
 		}
+		
+		if (CommonUtils.isNullOrEmptyString(criteria.getName())) {
+
+			if(appendAndQuery)
+				builder.append(AND_QUERY);
+			builder.append("institution.name like ?");
+			preparedStmtList.add("%" +criteria.getName() + "%" );
+			appendAndQuery= true;
+		}
+		if (CommonUtils.isNullOrEmptyString(criteria.getDoorNo())) {
+
+			if(appendAndQuery)
+				builder.append(AND_QUERY);
+			builder.append("address.doorno like ?");
+			preparedStmtList.add("%" +criteria.getDoorNo() + "%" );
+			appendAndQuery= true;
+		}
+		//=====================================================================
+		
 
 		Set<String> propertyIds = criteria.getPropertyIds();
 		if (!CollectionUtils.isEmpty(propertyIds)) {
