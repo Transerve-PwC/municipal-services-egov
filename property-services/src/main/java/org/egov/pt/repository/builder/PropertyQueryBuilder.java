@@ -12,7 +12,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Component
+@Slf4j
 public class PropertyQueryBuilder {
 	
 	@Autowired
@@ -156,7 +159,7 @@ public class PropertyQueryBuilder {
 		 * preparedStmtList.add(criteria.getLocality()); appendAndQuery= true; }
 		 */
 		//==========================================================================
-		if (CommonUtils.isNullOrEmptyString(criteria.getLocality())) {
+		if (!CommonUtils.isNullOrEmptyString(criteria.getLocality())) {
 
 			if(appendAndQuery)
 				builder.append(AND_QUERY);
@@ -165,7 +168,7 @@ public class PropertyQueryBuilder {
 			appendAndQuery= true;
 		}
 		
-		if (CommonUtils.isNullOrEmptyString(criteria.getName())) {
+		if (!CommonUtils.isNullOrEmptyString(criteria.getName())) {
 
 			if(appendAndQuery)
 				builder.append(AND_QUERY);
@@ -173,7 +176,7 @@ public class PropertyQueryBuilder {
 			preparedStmtList.add("%" +criteria.getName() + "%" );
 			appendAndQuery= true;
 		}
-		if (CommonUtils.isNullOrEmptyString(criteria.getDoorNo())) {
+		if (!CommonUtils.isNullOrEmptyString(criteria.getDoorNo())) {
 
 			if(appendAndQuery)
 				builder.append(AND_QUERY);
@@ -181,6 +184,9 @@ public class PropertyQueryBuilder {
 			preparedStmtList.add("%" +criteria.getDoorNo() + "%" );
 			appendAndQuery= true;
 		}
+		
+		
+		
 		//=====================================================================
 		
 
@@ -225,6 +231,11 @@ public class PropertyQueryBuilder {
 		}
 
 		String withClauseQuery = WITH_CLAUSE_QUERY.replace(REPLACE_STRING, builder);
+	
+		
+		log.debug("PropertySearchQuery {}",withClauseQuery);
+		log.debug("preparedStmtList {}",preparedStmtList);
+		
 		return addPaginationWrapper(withClauseQuery, preparedStmtList, criteria);
 	}
 
