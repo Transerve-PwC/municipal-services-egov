@@ -128,7 +128,7 @@ public class PropertyQueryBuilder {
 					&& CollectionUtils.isEmpty(criteria.getUuids())
 					&& CommonUtils.isNullOrEmptyString(criteria.getMobileNumber())
 					&& CommonUtils.isNullOrEmptyString(criteria.getDoorNo())//Added this
-					&& CommonUtils.isNullOrEmptyString(criteria.getLocality())//Added this
+					&& CommonUtils.isNullOrEmptyString(criteria.getStreet())//Added this
 					&& CommonUtils.isNullOrEmptyString(criteria.getName());//Added this
 		if(isEmpty)
 			throw new CustomException("EG_PT_SEARCH_ERROR"," No criteria given for the property search");
@@ -159,23 +159,22 @@ public class PropertyQueryBuilder {
 		 * preparedStmtList.add(criteria.getLocality()); appendAndQuery= true; }
 		 */
 		//==========================================================================
-		if (!CommonUtils.isNullOrEmptyString(criteria.getLocality())) {
+		if (!CommonUtils.isNullOrEmptyString(criteria.getStreet())) {
 
 			if(appendAndQuery)
 				builder.append(AND_QUERY);
-			builder.append("address.locality like ?");
-			preparedStmtList.add("%" +criteria.getLocality() + "%" );
+			builder.append("address.street like ?");
+			preparedStmtList.add("%" +criteria.getStreet() + "%" );
 			appendAndQuery= true;
 		}
 		
-		if (!CommonUtils.isNullOrEmptyString(criteria.getName())) {
-
-			if(appendAndQuery)
-				builder.append(AND_QUERY);
-			builder.append("institution.name like ?");
-			preparedStmtList.add("%" +criteria.getName() + "%" );
-			appendAndQuery= true;
-		}
+		/*
+		 * if (!CommonUtils.isNullOrEmptyString(criteria.getName())) {
+		 * 
+		 * if(appendAndQuery) builder.append(AND_QUERY);
+		 * builder.append("institution.name like ?"); preparedStmtList.add("%"
+		 * +criteria.getName() + "%" ); appendAndQuery= true; }
+		 */
 		if (!CommonUtils.isNullOrEmptyString(criteria.getDoorNo())) {
 
 			if(appendAndQuery)
