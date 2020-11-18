@@ -75,6 +75,11 @@ public class PropertyController {
 	public ResponseEntity<PropertyResponse> search(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper,
 			@Valid @ModelAttribute PropertyCriteria propertyCriteria) {
 		
+		if(propertyCriteria.getLocality()!=null && !propertyCriteria.getLocality().isEmpty())
+		{
+			propertyCriteria.setStreet(propertyCriteria.getLocality());
+		}
+		
 		propertyValidator.validatePropertyCriteria(propertyCriteria, requestInfoWrapper.getRequestInfo());
 		List<Property> properties = propertyService.searchProperty(propertyCriteria,requestInfoWrapper.getRequestInfo());
 		PropertyResponse response = PropertyResponse.builder().properties(properties).responseInfo(

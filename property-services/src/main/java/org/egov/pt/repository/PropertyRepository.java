@@ -157,7 +157,7 @@ public class PropertyRepository {
 		if(criteria.getTenantId() == null)
 			userTenant = requestInfo.getUserInfo().getTenantId();
 
-		UserSearchRequest userSearchRequest = userService.getBaseUserSearchRequest(userTenant, requestInfo);
+		UserSearchRequest userSearchRequest = userService.getBaseUserSearchRequestWithFuzzy(userTenant, requestInfo);
 		userSearchRequest.setMobileNumber(criteria.getMobileNumber());
 		userSearchRequest.setName(criteria.getName());
 		userSearchRequest.setUuid(ownerIds);
