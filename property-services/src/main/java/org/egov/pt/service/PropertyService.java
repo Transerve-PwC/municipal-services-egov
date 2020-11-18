@@ -438,7 +438,11 @@ public class PropertyService {
 				userRequest.setPermanentAddress(legacyRow.getAddress());
 				userRequest.setRoles(Arrays.asList(Role.builder().code("CITIZEN").build()));
 				String name = legacyRow.getOwnerName() != null && legacyRow.getOwnerName() != "" ? legacyRow.getOwnerName(): "Owner of "+legacyRow.getPTIN();
+				// Invalid name. Only alphabets and special characters -, ',`, .
 				name = name.length() > 100 ? name.substring(0, 99):name;
+				name = name.replaceAll("[^a-zA-Z-'`.]*", "");
+				// System.out.println("Santised Name: " + sanitisedString);
+
 
 				userRequest.setName(name);
 				userRequest.setCorrespondenceCity(tenantId);
