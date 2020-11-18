@@ -552,7 +552,7 @@ public class PropertyValidator {
 				&& CommonUtils.isNullOrEmptyString(criteria.getStreet())
 				&& CommonUtils.isNullOrEmptyString(criteria.getName())
 				&& CommonUtils.isNullOrEmptyString(criteria.getMobileNumber())
-				&& CommonUtils.isNullOrEmptyString(criteria.getDoorNo());
+				&& CommonUtils.isNullOrEmptyString(criteria.getDoorno());
 				 
 		
 		
@@ -584,7 +584,7 @@ public class PropertyValidator {
         if(criteria.getStreet()!=null && !allowedParams.contains("street"))
             throw new CustomException("EG_PT_INVALID_SEARCH","Search based on street is not available for : " + userType);
         
-        if(criteria.getDoorNo()!=null && !allowedParams.contains("doorNo"))
+        if(criteria.getDoorno()!=null && !allowedParams.contains("doorno"))
             throw new CustomException("EG_PT_INVALID_SEARCH","Search based on doorNo is not available for : " + userType);
         
         

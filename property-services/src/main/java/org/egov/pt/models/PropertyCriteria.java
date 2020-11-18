@@ -45,7 +45,7 @@ public class PropertyCriteria {
 	
 	private String locality;
 	
-	private String doorNo ;
+	private String doorno ;
 	
 	private String street ;
 	

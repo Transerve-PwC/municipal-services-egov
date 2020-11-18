@@ -127,7 +127,7 @@ public class PropertyQueryBuilder {
 					&& CollectionUtils.isEmpty(criteria.getOldpropertyids())
 					&& CollectionUtils.isEmpty(criteria.getUuids())
 					&& CommonUtils.isNullOrEmptyString(criteria.getMobileNumber())
-					&& CommonUtils.isNullOrEmptyString(criteria.getDoorNo())//Added this
+					&& CommonUtils.isNullOrEmptyString(criteria.getDoorno())//Added this
 					&& CommonUtils.isNullOrEmptyString(criteria.getStreet())//Added this
 					&& CommonUtils.isNullOrEmptyString(criteria.getName());//Added this
 		if(isEmpty)
@@ -175,12 +175,12 @@ public class PropertyQueryBuilder {
 		 * builder.append("institution.name like ?"); preparedStmtList.add("%"
 		 * +criteria.getName() + "%" ); appendAndQuery= true; }
 		 */
-		if (!CommonUtils.isNullOrEmptyString(criteria.getDoorNo())) {
+		if (!CommonUtils.isNullOrEmptyString(criteria.getDoorno())) {
 
 			if(appendAndQuery)
 				builder.append(AND_QUERY);
 			builder.append("address.doorno like ?");
-			preparedStmtList.add("%" +criteria.getDoorNo() + "%" );
+			preparedStmtList.add("%" +criteria.getDoorno() + "%" );
 			appendAndQuery= true;
 		}
 		
