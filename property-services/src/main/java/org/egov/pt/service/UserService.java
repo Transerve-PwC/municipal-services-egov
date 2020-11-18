@@ -397,7 +397,23 @@ public class UserService {
 				.active(true)
 				.build();
     }
-
+    /**
+     * provides a user search request with basic mandatory parameters
+     * 
+     * @param tenantId
+     * @param requestInfo
+     * @return
+     */
+    public UserSearchRequest getBaseUserSearchRequestWithFuzzy(String tenantId, RequestInfo requestInfo) {
+    	
+		return UserSearchRequest.builder()
+				.requestInfo(requestInfo)
+				.userType("CITIZEN")
+				.tenantId(tenantId)
+				.fuzzyLogic(true)
+				.active(true)
+				.build();
+    }
 
 
 }

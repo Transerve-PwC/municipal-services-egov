@@ -10,6 +10,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.jayway.jsonpath.JsonPath;
+import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.mdms.model.MasterDetail;
@@ -29,6 +30,7 @@ import org.egov.pt.models.user.UserSearchRequest;
 import org.egov.pt.models.workflow.State;
 import org.egov.pt.producer.Producer;
 import org.egov.pt.repository.*;
+import org.egov.pt.repository.builder.PropertyQueryBuilder;
 import org.egov.pt.repository.rowmapper.LegacyExcelRowMapper;
 import org.egov.pt.util.PTConstants;
 import org.egov.pt.util.PropertyUtil;
@@ -46,6 +48,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
 
 @Service
+@Slf4j
 public class PropertyService {
 
 
@@ -328,11 +331,20 @@ public class PropertyService {
 			properties = repository.getPropertiesWithOwnerInfo(criteria, requestInfo, false);
 		}
 
+		List<Property> propertiesWithBoundaries = new ArrayList<Property>();
 		properties.forEach(property -> {
-			enrichmentService.enrichBoundary(property, requestInfo);
+			try {
+				enrichmentService.enrichBoundary(property, requestInfo);
+				propertiesWithBoundaries.add(property);
+			} catch (CustomException e) {
+				log.error("EnrichBoundary failed for the property id  {} ",property.getPropertyId());
+				log.error(" Error message {} ,  Error code   {}",e.getMessage(),e.getCode());
+				
+			//	e.printStackTrace();
+			}
 		});
 		
-		return properties;
+		return propertiesWithBoundaries;
 	}
 
 	public List<Property> searchPropertyPlainSearch(PropertyCriteria criteria, RequestInfo requestInfo) {
