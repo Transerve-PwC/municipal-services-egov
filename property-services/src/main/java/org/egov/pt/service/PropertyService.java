@@ -435,8 +435,8 @@ public class PropertyService {
 				User userRequest = new User();
 				userRequest.setActive(true);
 				userRequest.setMobileNumber(
-						legacyRow.getMobile() != null && legacyRow.getMobile() != "" ? legacyRow.getMobile()
-								: convertPTINToMobileNumber("9" + legacyRow.getPTIN()));
+						( legacyRow.getMobile() != null && legacyRow.getMobile() != "" && (new BigDecimal(legacyRow.getMobile()).longValue()!=0)) ? legacyRow.getMobile()
+								: convertPTINToMobileNumber("5" + legacyRow.getPTIN()));
 				userRequest.setUserName(UUID.randomUUID().toString());
 				userRequest.setPassword("123456");
 				userRequest.setFatherOrHusbandName(legacyRow.getFHName() != null && legacyRow.getFHName().length() > 100
@@ -639,7 +639,7 @@ public class PropertyService {
 		while (curPtin.length() < 9) {
 			curPtin = "0" + curPtin;
 		}
-		return "9" + curPtin;
+		return "5" + curPtin;
 	}
-
+	
 }
