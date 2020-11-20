@@ -162,7 +162,7 @@ public class UserService {
      * @param requestInfo RequestInfo from the propertyRequest
      * @return UserDetailResponse containing the user if present and the responseInfo
      */
-	private UserDetailResponse userExists(OwnerInfo owner, RequestInfo requestInfo) {
+	public UserDetailResponse userExists(OwnerInfo owner, RequestInfo requestInfo) {
 
 		UserSearchRequest userSearchRequest = getBaseUserSearchRequest(owner.getTenantId(), requestInfo);
 		userSearchRequest.setMobileNumber(owner.getMobileNumber());

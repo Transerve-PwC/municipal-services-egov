@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
@@ -21,6 +22,7 @@ import org.egov.mdms.model.MdmsCriteria;
 import org.egov.mdms.model.MdmsCriteriaReq;
 import org.egov.mdms.model.ModuleDetail;
 import org.egov.pt.config.PropertyConfiguration;
+import org.egov.pt.models.OwnerInfo;
 import org.egov.pt.models.enums.Channel;
 import org.egov.pt.models.enums.Status;
 import org.egov.pt.models.excel.Address;
@@ -31,6 +33,7 @@ import org.egov.pt.models.excel.RowExcel;
 import org.egov.pt.models.excel.Unit;
 import org.egov.pt.models.user.User;
 import org.egov.pt.models.user.UserDetailResponse;
+import org.egov.pt.models.user.UserSearchRequest;
 import org.egov.pt.repository.AddressExcelRepository;
 import org.egov.pt.repository.OwnerExcelRepository;
 import org.egov.pt.repository.PropertyExcelRepository;
@@ -41,10 +44,15 @@ import org.egov.pt.repository.rowmapper.LegacyExcelRowMapper;
 import org.egov.pt.util.PTConstants;
 import org.egov.pt.util.PropertyUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+
+import com.jayway.jsonpath.JsonPath;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Service
 public class UPMigrationService {
 
     @Autowired
@@ -79,51 +87,15 @@ public class UPMigrationService {
 
     @Autowired
     private ServiceRequestRepository restRepo;
+    
+    @Autowired
+    private Cahebaleservice cachebaleservice ;
+    
 
-    private static final String TENANTS_MORADABAD = "up.moradabad";
+   
+    
 
-    private MdmsCriteriaReq prepareMdMsRequest(String tenantId, String moduleName, List<String> names, String filter,
-            RequestInfo requestInfo) {
-
-        List<MasterDetail> masterDetails = new ArrayList<>();
-
-        names.forEach(name -> {
-            masterDetails.add(MasterDetail.builder().name(name).filter(filter).build());
-        });
-
-        ModuleDetail moduleDetail = ModuleDetail.builder().moduleName(moduleName).masterDetails(masterDetails).build();
-        List<ModuleDetail> moduleDetails = new ArrayList<>();
-        moduleDetails.add(moduleDetail);
-        MdmsCriteria mdmsCriteria = MdmsCriteria.builder().tenantId(tenantId).moduleDetails(moduleDetails).build();
-        return MdmsCriteriaReq.builder().requestInfo(requestInfo).mdmsCriteria(mdmsCriteria).build();
-    }
-
-    public Map<String, String> getLocalityMap(String tenantId, RequestInfo requestinfo) {
-        if (TENANTS_MORADABAD.equalsIgnoreCase(tenantId)) {
-            final Map<String, String> localityMap = new HashMap<String, String>();
-            localityMap.put("Adarsh Nagar_08", "MOR275");
-            localityMap.put("Adarsh_Nagar(08)", "MOR275");
-            localityMap.put("Ashok_Nagar", "MOR222");
-            localityMap.put("Gopalpur", "MOR130");
-            localityMap.put("Gopalpur_03", "MOR130");
-            localityMap.put("Gyani_Wali_Basti", "MOR273");
-            localityMap.put("Kumar_Kunj", "MOR029");
-            localityMap.put("Majholi", "MOR132");
-            return localityMap;
-        }
-        if (TENANTS_MORADABAD.equalsIgnoreCase(tenantId)) {
-            StringBuilder uri = new StringBuilder(config.getMdmsHost()).append(config.getMdmsEndpoint());
-            MdmsCriteriaReq criteriaReq = prepareMdMsRequest(tenantId, "egov-location",
-                    Arrays.asList(new String[] { "TenantBoundary" }), "[?(@.label=='Locality')]", requestinfo);
-            Optional<Object> response = restRepo.fetchResult(uri, criteriaReq);
-
-            return null;
-            // List<Map<String, String>> boundaries = JsonPath.read(response.get(),
-            // "$..[?(@.name=='" + legacyRow.getLocality() + "')]");
-
-        }
-        return null;
-    }
+   
 
     private static final RequestInfo userCreateRequestInfo = RequestInfo.builder().action("_create").apiId("Rainmaker")
             .did("1").key("").msgId("20170310130900|en_IN").ver(".01").build();
@@ -154,8 +126,35 @@ public class UPMigrationService {
         userRequest.setName(name);
         userRequest.setCorrespondenceCity(tenantId);
         userRequest.setCorrespondenceAddress(legacyRow.getAddress());
-        UserDetailResponse userDetailResponse = userService.createUser(userCreateRequestInfo, userRequest);
-        User user = userDetailResponse.getUser().get(0);
+        
+		
+		  OwnerInfo owner = new OwnerInfo();
+		  owner.setMobileNumber(userRequest.getMobileNumber());
+		  owner.setName(legacyRow.getOwnerName());
+		  owner.setType("CITIZEN"); 
+		  owner.setTenantId("up");
+		  
+		  RequestInfo userCreateRequestInfo1 =
+		  RequestInfo.builder().action("").apiId("Rainmaker")
+		  .did("1").key("").msgId("20170310130900|en_IN").ver(".01").build();
+		  
+		  UserDetailResponse userDetailResponse = userService.userExists(owner,
+		  userCreateRequestInfo1);
+		  
+		  User user;
+		  
+		  if(userDetailResponse.getUser().size() > 0)
+		  {
+			  user =  userDetailResponse.getUser().get(0);
+		  }else
+		  {
+			  UserDetailResponse  userDetailResponse1 = userService.createUser(userCreateRequestInfo, userRequest); 
+			  user = userDetailResponse1.getUser().get(0);
+		  
+			  
+		  }
+		
+        
         return user;
     }
 
@@ -181,18 +180,17 @@ public class UPMigrationService {
                 // Create user if not exists in db.
                 User user = this.createUserIfNotExists(legacyRow);
 
-                // Map<String, String> tokenResponse = (Map<String, String>)
-                // userService.getToken(user.getUserName(),
-                // "123456", tenantId, user.getType());
-                // String token = (String) tokenResponse.get("access_token");
+				
+				  String token = cachebaleservice.getUserToken(tenantId, user);
+				 
 
-                RequestInfo requestinfo = RequestInfo.builder().authToken("token").action("token").apiId("Rainmaker")
+                RequestInfo requestinfo = RequestInfo.builder().authToken(token).action("token").apiId("Rainmaker")
                         .did("1").key("").msgId("20170310130900|en_IN").ver(".01")
                         .userInfo(org.egov.common.contract.request.User.builder().type(user.getType()).tenantId("up")
-                                .userName("system").build())
+                                .userName(user.getUserName()).build())
                         .build();
 
-                Map<String, String> localityMap = getLocalityMap(tenantId, requestinfo);
+                Map<String, String> localityMap = cachebaleservice.getLocalityMap(tenantId, requestinfo);
                 String localityCode = localityMap.get(legacyRow.getLocality());
                 if (localityCode == null) {
                     log.warn("Empty locality code for the property {}", legacyRow.getLocality());
