@@ -4,23 +4,18 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
-import org.egov.mdms.model.MasterDetail;
-import org.egov.mdms.model.MdmsCriteria;
-import org.egov.mdms.model.MdmsCriteriaReq;
-import org.egov.mdms.model.ModuleDetail;
 import org.egov.pt.config.PropertyConfiguration;
 import org.egov.pt.models.OwnerInfo;
 import org.egov.pt.models.enums.Channel;
@@ -43,6 +38,7 @@ import org.egov.pt.repository.UnitExcelRepository;
 import org.egov.pt.repository.rowmapper.LegacyExcelRowMapper;
 import org.egov.pt.util.PTConstants;
 import org.egov.pt.util.PropertyUtil;
+import org.egov.pt.web.controllers.PropertyController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -100,7 +96,7 @@ public class UPMigrationService {
     private static final RequestInfo userCreateRequestInfo = RequestInfo.builder().action("_create").apiId("Rainmaker")
             .did("1").key("").msgId("20170310130900|en_IN").ver(".01").build();
 
-    private User createUserIfNotExists(LegacyRow legacyRow) {
+    private User createUserIfNotExists(LegacyRow legacyRow, HashMap<String, User> existingUser) {
         final String tenantId = "up." + legacyRow.getULBName().toLowerCase();
         User userRequest = new User();
         userRequest.setActive(true);
@@ -138,23 +134,29 @@ public class UPMigrationService {
 		  RequestInfo.builder().action("").apiId("Rainmaker")
 		  .did("1").key("").msgId("20170310130900|en_IN").ver(".01").build();
 		  
-		  UserDetailResponse userDetailResponse = userService.userExists(owner,
-		  userCreateRequestInfo1);
+
+		  User user = null;
 		  
-		  User user;
-		  
-		  if(userDetailResponse.getUser().size() > 0)
+		  if(existingUser.containsKey(userRequest.getMobileNumber()) && (existingUser.get(userRequest.getMobileNumber()) != null))
 		  {
-			  user =  userDetailResponse.getUser().get(0);
-		  }else
+			   user = existingUser.get(userRequest.getMobileNumber());
+		  }
+		  else {
+			  UserDetailResponse userDetailResponse = userService.userExists(owner,userCreateRequestInfo1);
+
+			  if(userDetailResponse.getUser().size() > 0)
+			  {
+				  user =  userDetailResponse.getUser().get(0);
+			  }
+		  }
+
+		  if(user == null)
 		  {
 			  UserDetailResponse  userDetailResponse1 = userService.createUser(userCreateRequestInfo, userRequest); 
 			  user = userDetailResponse1.getUser().get(0);
-		  
-			  
+			  existingUser.put(userRequest.getMobileNumber(), user);
 		  }
-		
-        
+
         return user;
     }
 
@@ -171,6 +173,34 @@ public class UPMigrationService {
 
         AtomicInteger numOfSuccess = new AtomicInteger();
         AtomicInteger numOfErrors = new AtomicInteger();
+        
+        Set<String> duplicateMobileNumbers = new HashSet<>();
+        HashMap<String, User>  existingUser = new HashMap<String, User>();
+        final ClassLoader loader = PropertyController.class.getClassLoader();
+        final InputStream excelFile = loader.getResourceAsStream("BareilyOldPropertyTaxDatabase.xlsx");
+        excelService.read(excelFile, skip, limit, (RowExcel row) -> {
+        	 LegacyRow legacyRow = null;
+             
+                 try {
+					legacyRow = legacyExcelRowMapper.map(row);
+					  if(!duplicateMobileNumbers.add(legacyRow.getMobile()))
+					  {
+						  existingUser.put(legacyRow.getMobile(), null);
+					  }
+					  
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+               
+                 return true;
+        });
+        
+        
+        log.info("  existingUsers size {}",existingUser.size());
+        
+        existingUser.forEach((key, value) -> {log.info("Key: {}",  key );});
+        
+        	
         excelService.read(file, skip, limit, (RowExcel row) -> {
             LegacyRow legacyRow = null;
             try {
@@ -178,7 +208,7 @@ public class UPMigrationService {
                 String tenantId = "up." + legacyRow.getULBName().toLowerCase();
 
                 // Create user if not exists in db.
-                User user = this.createUserIfNotExists(legacyRow);
+                User user = this.createUserIfNotExists(legacyRow , existingUser);
 
 				
 				  String token = cachebaleservice.getUserToken(tenantId, user);
