@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service;
 import com.jayway.jsonpath.JsonPath;
 
 @Service
-public class Cahebaleservice {
+public class Cachebaleservice {
 	
 	 @Autowired
 	 private ServiceRequestRepository restRepo;

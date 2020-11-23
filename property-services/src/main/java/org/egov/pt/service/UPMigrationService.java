@@ -83,7 +83,7 @@ public class UPMigrationService {
     private ServiceRequestRepository restRepo;
     
     @Autowired
-    private Cahebaleservice cachebaleservice ;
+    private Cachebaleservice cachebaleservice ;
     
 
    
@@ -173,7 +173,7 @@ public class UPMigrationService {
         Set<String> duplicateMobileNumbers = new HashSet<>();
         HashMap<String, User>  existingUser = new HashMap<String, User>();
         final ClassLoader loader = PropertyController.class.getClassLoader();
-        final InputStream excelFile = loader.getResourceAsStream("BareilyOldPropertyTaxDatabase.xlsx");
+        final InputStream excelFile = loader.getResourceAsStream(config.getMigrationFileName());
         excelService.read(excelFile, skip, limit, (RowExcel row) -> {
         	 LegacyRow legacyRow = null;
              
