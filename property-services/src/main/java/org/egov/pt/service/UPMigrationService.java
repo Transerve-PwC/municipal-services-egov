@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
@@ -27,6 +28,7 @@ import org.egov.pt.models.excel.RowExcel;
 import org.egov.pt.models.excel.Unit;
 import org.egov.pt.models.user.User;
 import org.egov.pt.models.user.UserDetailResponse;
+import org.egov.pt.models.user.UserSearchRequest;
 import org.egov.pt.repository.AddressExcelRepository;
 import org.egov.pt.repository.OwnerExcelRepository;
 import org.egov.pt.repository.PropertyExcelRepository;
@@ -84,6 +86,7 @@ public class UPMigrationService {
     
     @Autowired
     private Cachebaleservice cachebaleservice ;
+
     
 
    
@@ -132,6 +135,7 @@ public class UPMigrationService {
 		  RequestInfo.builder().action("").apiId("Rainmaker")
 		  .did("1").key("").msgId("20170310130900|en_IN").ver(".01").build();
 		  
+
 		  User user = null;
 		  
 		  if(existingUser.containsKey(userRequest.getMobileNumber()) && (existingUser.get(userRequest.getMobileNumber()) != null))
@@ -153,6 +157,7 @@ public class UPMigrationService {
 			  user = userDetailResponse1.getUser().get(0);
 			  existingUser.put(userRequest.getMobileNumber(), user);
 		  }
+
         return user;
     }
 
@@ -173,7 +178,9 @@ public class UPMigrationService {
         Set<String> duplicateMobileNumbers = new HashSet<>();
         HashMap<String, User>  existingUser = new HashMap<String, User>();
         final ClassLoader loader = PropertyController.class.getClassLoader();
+
         final InputStream excelFile = loader.getResourceAsStream(config.getMigrationFileName());
+
         excelService.read(excelFile, skip, limit, (RowExcel row) -> {
         	 LegacyRow legacyRow = null;
              
