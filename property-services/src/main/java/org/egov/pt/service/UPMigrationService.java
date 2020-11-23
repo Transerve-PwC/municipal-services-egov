@@ -177,7 +177,7 @@ public class UPMigrationService {
         Set<String> duplicateMobileNumbers = new HashSet<>();
         HashMap<String, User>  existingUser = new HashMap<String, User>();
         final ClassLoader loader = PropertyController.class.getClassLoader();
-        final InputStream excelFile = loader.getResourceAsStream("BareilyOldPropertyTaxDatabase.xlsx");
+        final InputStream excelFile = loader.getResourceAsStream("legacy-moradabad.xlsx");
         excelService.read(excelFile, skip, limit, (RowExcel row) -> {
         	 LegacyRow legacyRow = null;
              
