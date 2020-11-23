@@ -136,7 +136,7 @@ public class PropertyController {
 	public ResponseEntity<?> propertyImport(@RequestParam(required = false) Long limit,
 			@RequestParam(required = false, defaultValue = "1") Long skip) throws Exception {
 		long startTime = System.nanoTime();
-		final InputStream excelFile = loader.getResourceAsStream("legacy-moradabad.xlsx");
+		final InputStream excelFile = loader.getResourceAsStream("legacy-bareilly.xlsx");
 		final InputStream matchedFile = loader.getResourceAsStream("matched.csv");
 		upMigrationService.importProperties(excelFile, matchedFile, skip, limit);
 		long endtime = System.nanoTime();
