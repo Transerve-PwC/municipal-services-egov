@@ -224,7 +224,7 @@ public class UPMigrationService {
                         .build();
 
                 Map<String, String> localityMap = cachebaleservice.getLocalityMap(tenantId, requestinfo);
-                String localityCode = localityMap.get(legacyRow.getLocality());
+                String localityCode = localityMap.get(legacyRow.getLocality().trim().toLowerCase());
                 if (localityCode == null) {
                     log.warn("Empty locality code for the property {}", legacyRow.getLocality());
                 }

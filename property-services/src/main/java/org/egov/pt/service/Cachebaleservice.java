@@ -2,6 +2,7 @@ package org.egov.pt.service;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +61,10 @@ public class Cachebaleservice {
 	            Optional<Object> response = restRepo.fetchResult(uri, criteriaReq);
 	            List<Map<String, String>> boundaries = JsonPath.read(response.get(),"$.MdmsRes.egov-location.TenantBoundary");
 	            
-	            return boundaries.stream().collect(Collectors.toMap(b -> b.get("name") , b -> b.get("code"),(oldval,newval) -> newval));
+	            Map<String, String> localityMap = boundaries.stream().collect(Collectors.toMap(b -> b.get("name") , b -> b.get("code"),(oldval,newval) -> newval));
+	            
+	            return ((HashMap<String, String>) localityMap).entrySet().parallelStream().collect(Collectors.toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue));
+	           
 	            
 	            // List<Map<String, String>> boundaries = JsonPath.read(response.get(),
 	            // "$..[?(@.name=='" + legacyRow.getLocality() + "')]");
