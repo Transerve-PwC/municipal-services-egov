@@ -104,7 +104,7 @@ public class UPMigrationService {
         userRequest.setMobileNumber((legacyRow.getMobile() != null && legacyRow.getMobile() != ""
                 && (new BigDecimal(legacyRow.getMobile()).longValue() != 0)) ? legacyRow.getMobile()
                         : convertPTINToMobileNumber("5" + legacyRow.getPTIN()));
-        userRequest.setUserName(UUID.randomUUID().toString());
+        userRequest.setUserName(userRequest.getMobileNumber());
         userRequest.setPassword("123456");
         userRequest.setFatherOrHusbandName(legacyRow.getFHName() != null && legacyRow.getFHName().length() > 100
                 ? legacyRow.getFHName().substring(0, 99)
