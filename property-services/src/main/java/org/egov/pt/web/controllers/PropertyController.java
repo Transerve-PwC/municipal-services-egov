@@ -9,6 +9,7 @@ import java.util.Map;
 import javax.validation.Valid;
 
 import org.egov.common.contract.response.ResponseInfo;
+import org.egov.pt.config.PropertyConfiguration;
 import org.egov.pt.models.Property;
 import org.egov.pt.models.PropertyCriteria;
 import org.egov.pt.models.oldProperty.OldPropertyCriteria;
@@ -51,6 +52,10 @@ public class PropertyController {
 
 	@Autowired
 	private PropertyValidator propertyValidator;
+	
+	@Autowired
+	private PropertyConfiguration config;
+	
 
 	@PostMapping("/_create")
 	public ResponseEntity<PropertyResponse> create(@Valid @RequestBody PropertyRequest propertyRequest) {
@@ -136,7 +141,8 @@ public class PropertyController {
 	public ResponseEntity<?> propertyImport(@RequestParam(required = false) Long limit,
 			@RequestParam(required = false, defaultValue = "1") Long skip) throws Exception {
 		long startTime = System.nanoTime();
-		final InputStream excelFile = loader.getResourceAsStream("legacy-bareilly.xlsx");
+		final InputStream excelFile = loader.getResourceAsStream(config.getMigrationFileName());
+		
 		final InputStream matchedFile = loader.getResourceAsStream("matched.csv");
 		upMigrationService.importProperties(excelFile, matchedFile, skip, limit);
 		long endtime = System.nanoTime();

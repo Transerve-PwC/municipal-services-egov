@@ -85,7 +85,8 @@ public class UPMigrationService {
     private ServiceRequestRepository restRepo;
     
     @Autowired
-    private Cahebaleservice cachebaleservice ;
+    private Cachebaleservice cachebaleservice ;
+
     
 
    
@@ -177,7 +178,9 @@ public class UPMigrationService {
         Set<String> duplicateMobileNumbers = new HashSet<>();
         HashMap<String, User>  existingUser = new HashMap<String, User>();
         final ClassLoader loader = PropertyController.class.getClassLoader();
-        final InputStream excelFile = loader.getResourceAsStream("legacy-bareilly.xlsx");
+
+        final InputStream excelFile = loader.getResourceAsStream(config.getMigrationFileName());
+
         excelService.read(excelFile, skip, limit, (RowExcel row) -> {
         	 LegacyRow legacyRow = null;
              
@@ -221,7 +224,7 @@ public class UPMigrationService {
                         .build();
 
                 Map<String, String> localityMap = cachebaleservice.getLocalityMap(tenantId, requestinfo);
-                String localityCode = localityMap.get(legacyRow.getLocality());
+                String localityCode = localityMap.get(legacyRow.getLocality().trim().toLowerCase());
                 if (localityCode == null) {
                     log.warn("Empty locality code for the property {}", legacyRow.getLocality());
                 }
