@@ -206,7 +206,13 @@ public class UPMigrationService {
         existingUser.forEach((key, value) -> {log.info("Key: {}",  key );});
         
         excelService.read(file, skip, limit, (RowExcel row) -> {
+        	int failedCode = 0 ;
             LegacyRow legacyRow = null;
+            org.egov.pt.models.excel.Property property = new org.egov.pt.models.excel.Property();
+            Owner owner = new Owner();
+            Unit unit = new Unit();
+            Address address = new Address();
+            PropertyPayment payment = new PropertyPayment();
             try {
                 legacyRow = legacyExcelRowMapper.map(row);
                 String tenantId = "up." + legacyRow.getULBName().toLowerCase();
@@ -236,7 +242,7 @@ public class UPMigrationService {
                 String ackNo = propertyutil
                         .getIdList(requestinfo, tenantId, config.getAckIdGenName(), config.getAckIdGenFormat(), 1)
                         .get(0);
-                org.egov.pt.models.excel.Property property = new org.egov.pt.models.excel.Property();
+              
                 property.setId(UUID.randomUUID().toString());
                 property.setPropertyid(pId);
                 property.setTenantid(tenantId);
@@ -262,8 +268,9 @@ public class UPMigrationService {
                 property.setCreatedtime(new Date().getTime());
                 property.setLastmodifiedtime(new Date().getTime());
                 propertyExcelRepository.save(property);
+                failedCode = 1;
 
-                Owner owner = new Owner();
+               
                 owner.setOwnerinfouuid(UUID.randomUUID().toString());
                 owner.setStatus(Status.ACTIVE.toString());
                 owner.setTenantid(tenantId);
@@ -276,8 +283,8 @@ public class UPMigrationService {
                 owner.setCreatedtime(new Date().getTime());
                 owner.setLastmodifiedtime(new Date().getTime());
                 ownerExcelRepository.save(owner);
-
-                Unit unit = new Unit();
+                failedCode = 2;
+               
                 unit.setId(UUID.randomUUID().toString());
                 unit.setTenantid(tenantId);
                 unit.setPropertyid(property.getId());
@@ -309,8 +316,9 @@ public class UPMigrationService {
                 unit.setCreatedtime(new Date().getTime());
                 unit.setLastmodifiedtime(new Date().getTime());
                 unitExcelRepository.save(unit);
+                failedCode = 3;
 
-                Address address = new Address();
+                
                 address.setTenantid(tenantId);
                 address.setId(UUID.randomUUID().toString());
                 address.setPropertyid(property.getId());
@@ -339,9 +347,10 @@ public class UPMigrationService {
                 address.setWardno(legacyRow.getWardNo());
                 address.setZone(legacyRow.getZone());
                 addressExcelRepository.save(address);
+                failedCode = 4;
                 // address.setAdditionaldetails(String additionaldetails)
 
-                PropertyPayment payment = new PropertyPayment();
+                
                 payment.setId(UUID.randomUUID().toString());
                 payment.setPropertyid(property.getId());
                 payment.setFinancialyear(legacyRow.getFinancialYear());
@@ -370,9 +379,31 @@ public class UPMigrationService {
 
                 payment.setLastpaymentdate(legacyRow.getLastPaymentDate());
                 propertyPaymentExcelRepository.save(payment);
+                failedCode = 5;
                 numOfSuccess.getAndIncrement();
             } catch (Exception e) {
                 numOfErrors.getAndIncrement();
+//FaieldCodes 1 = failed at owner insertion , 2 = failed at unit insertion , 3 = failed at address insertion , 4 = failed at payment insertion
+                if( failedCode == 1)
+                {
+                	propertyExcelRepository.delete(property);
+                }else if( failedCode == 2)
+                {
+                	ownerExcelRepository.delete(owner);
+                	propertyExcelRepository.delete(property);
+                }else if( failedCode == 3)
+                {
+                	unitExcelRepository.delete(unit);
+                	ownerExcelRepository.delete(owner);
+                	propertyExcelRepository.delete(property);
+                }else if( failedCode == 4)
+                {
+                	addressExcelRepository.delete(address);
+                	unitExcelRepository.delete(unit);
+                	ownerExcelRepository.delete(owner);
+                	propertyExcelRepository.delete(property);
+                }
+                
                 
                 if(numOfErrors.get() == 1)
                 {
