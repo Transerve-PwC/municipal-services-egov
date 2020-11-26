@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -13,7 +12,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
@@ -207,7 +205,6 @@ public class UPMigrationService {
         
         existingUser.forEach((key, value) -> {log.info("Key: {}",  key );});
         
-        	ArrayList<LegacyRow>  failedRecordsList = new ArrayList();
         excelService.read(file, skip, limit, (RowExcel row) -> {
             LegacyRow legacyRow = null;
             try {
@@ -376,16 +373,25 @@ public class UPMigrationService {
                 numOfSuccess.getAndIncrement();
             } catch (Exception e) {
                 numOfErrors.getAndIncrement();
-                failedRecordsList.add(legacyRow);
+                
+                if(numOfErrors.get() == 1)
+                {
+                	excelService.createFailedRecordsFile();
+                }
+                
+                excelService.writeFailedRecords(legacyRow);
+                
+                
                 log.error("Row[{}] - [{}] , errorMessage: {}", row.getRowIndex(), legacyRow.toString(), e.getMessage());
             }
             return true;
         });
         log.info("Import Completed - Success={} Errors={}", numOfSuccess, numOfErrors);
-        excelService.writeFailedRecords(failedRecordsList);
-        log.info("failedRecordsList size {}", failedRecordsList.size());
+        excelService.writeToFileandClose();
+      
     }
-
+    
+ 
     private String convertPTINToMobileNumber(String ptin) {
         String curPtin = ptin;
         while (curPtin.length() < 9) {
