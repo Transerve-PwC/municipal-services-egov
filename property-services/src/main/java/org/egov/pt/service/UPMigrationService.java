@@ -11,6 +11,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.egov.common.contract.request.RequestInfo;
@@ -430,4 +432,303 @@ public class UPMigrationService {
         }
         return "5" + curPtin;
     }
+    
+
+ 
+  public void importPropertiesParallel(InputStream file, InputStream matchedFile, Long skip, Long limit) throws Exception {
+
+      // Build matched usage type map
+      BufferedReader br = new BufferedReader(new InputStreamReader(matchedFile));
+      String line = "";
+      Map<String, String> matched = new HashMap<>();
+      while ((line = br.readLine()) != null) {
+          String[] values = line.split(",");
+          matched.put(values[0], values[1]);
+      }
+      
+      AtomicInteger numOfSuccess = new AtomicInteger();
+      AtomicInteger numOfErrors = new AtomicInteger();
+      AtomicInteger totalNumber = new AtomicInteger();
+      
+      Set<String> duplicateMobileNumbers = new HashSet<>();
+      HashMap<String, User>  existingUser = new HashMap<String, User>();
+      final ClassLoader loader = PropertyController.class.getClassLoader();
+
+      final InputStream excelFile = loader.getResourceAsStream(config.getMigrationFileName());
+
+      excelService.read(excelFile, skip, limit, (RowExcel row) -> {
+    	  totalNumber.getAndIncrement();
+      	 LegacyRow legacyRow = null;
+           
+               try {
+					legacyRow = legacyExcelRowMapper.map(row);
+					
+					String name = legacyRow.getOwnerName() != null && legacyRow.getOwnerName() != "" ? legacyRow.getOwnerName()
+			                : "Owner of " + legacyRow.getPTIN();
+			        // Invalid name. Only alphabets and special characters -, ',`, .
+			        name = name.replaceAll("[\\$\"'<>?\\\\~`!@#$%^()+={}\\[\\]*,.:;“”‘’]*", "");
+			        name = name.length() > 100 ? name.substring(0, 99) : name;
+					
+					  if(!duplicateMobileNumbers.add(legacyRow.getMobile().trim()+name.trim()))
+					  {
+						  existingUser.put(legacyRow.getMobile().trim()+name.trim(), null);
+					  }
+					  
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+             
+               return true;
+      });
+      
+      
+      log.info("  existingUsers size {}",existingUser.size());
+      
+      existingUser.forEach((key, value) -> {log.info("Key: {}",  key );});
+      excelService.createFailedRecordsFile();
+      int cores = Runtime.getRuntime().availableProcessors();
+      ExecutorService executorService = Executors.newFixedThreadPool(cores);
+      
+      excelService.read(file, skip, limit, (RowExcel row) -> {
+    	  
+    	  executorService.submit(() -> { 
+      	  int failedCode = 0 ;
+          LegacyRow legacyRow = null;
+          org.egov.pt.models.excel.Property property = new org.egov.pt.models.excel.Property();
+          Owner owner = new Owner();
+          Unit unit = new Unit();
+          Address address = new Address();
+          PropertyPayment payment = new PropertyPayment();
+          try {
+              legacyRow = legacyExcelRowMapper.map(row);
+              String tenantId = "up." + legacyRow.getULBName().toLowerCase();
+
+              // Create user if not exists in db.
+              User user = this.createUserIfNotExists(legacyRow , existingUser);
+
+				
+				  String token = cachebaleservice.getUserToken(tenantId, user);
+				 
+
+              RequestInfo requestinfo = RequestInfo.builder().authToken(token).action("token").apiId("Rainmaker")
+                      .did("1").key("").msgId("20170310130900|en_IN").ver(".01")
+                      .userInfo(org.egov.common.contract.request.User.builder().type(user.getType()).tenantId("up")
+                              .userName(user.getUserName()).build())
+                      .build();
+
+              Map<String, String> localityMap = cachebaleservice.getLocalityMap(tenantId, requestinfo);
+              String localityCode = localityMap.get(legacyRow.getLocality().trim().toLowerCase());
+              if (localityCode == null) {
+                  log.warn("Empty locality code for the property {}", legacyRow.getLocality());
+              }
+
+              // Generate unique property id and acknowledgement no
+              String pId = propertyutil.getIdList(requestinfo, tenantId, config.getPropertyIdGenName(),
+                      config.getPropertyIdGenFormat(), 1).get(0);
+              String ackNo = propertyutil
+                      .getIdList(requestinfo, tenantId, config.getAckIdGenName(), config.getAckIdGenFormat(), 1)
+                      .get(0);
+            
+              property.setId(UUID.randomUUID().toString());
+              property.setPropertyid(pId);
+              property.setTenantid(tenantId);
+              property.setAccountid(user.getUuid());
+              property.setStatus(config.getWfStatusActive());
+              property.setAcknowldgementnumber(ackNo);
+              property.setPropertytype(PTConstants.PT_TYPE_BUILTUP);
+              property.setOwnershipcategory("INDIVIDUAL.SINGLEOWNER");
+              if (matched.containsKey(legacyRow.getPropertyTypeClassification())) {
+                  property.setUsagecategory(matched.get(legacyRow.getPropertyTypeClassification()));
+              } else {
+                  property.setUsagecategory("OTHERS");
+              }
+              property.setNooffloors(1L);
+              property.setLandarea(BigDecimal
+                      .valueOf(Double.valueOf(legacyRow.getPlotArea() != null ? legacyRow.getPlotArea() : "0")));
+              property.setOldpropertyid(legacyRow.getPTIN());
+              property.setSource("DATA_MIGRATION");
+              property.setChannel(Channel.MIGRATION.toString());
+              property.setConstructionyear(legacyRow.getConstructionYear());
+              property.setCreatedby(user.getUuid());
+              property.setLastmodifiedby(user.getUuid());
+              property.setCreatedtime(new Date().getTime());
+              property.setLastmodifiedtime(new Date().getTime());
+              propertyExcelRepository.save(property);
+              failedCode = 1;
+
+             
+              owner.setOwnerinfouuid(UUID.randomUUID().toString());
+              owner.setStatus(Status.ACTIVE.toString());
+              owner.setTenantid(tenantId);
+              owner.setPropertyid(property.getId());
+              owner.setUserid(user.getUuid());
+              owner.setOwnertype("NONE");
+              owner.setRelationship("FATHER");
+              owner.setCreatedby(user.getUuid());
+              owner.setLastmodifiedby(user.getUuid());
+              owner.setCreatedtime(new Date().getTime());
+              owner.setLastmodifiedtime(new Date().getTime());
+              ownerExcelRepository.save(owner);
+              failedCode = 2;
+             
+              unit.setId(UUID.randomUUID().toString());
+              unit.setTenantid(tenantId);
+              unit.setPropertyid(property.getId());
+              unit.setFloorno(1L);
+              if (matched.containsKey(legacyRow.getPropertyTypeClassification())) {
+                  unit.setUnittype(matched.get(legacyRow.getPropertyTypeClassification()));
+                  unit.setUsagecategory(matched.get(legacyRow.getPropertyTypeClassification()));
+              } else {
+                  unit.setUnittype("OTHERS");
+                  unit.setUsagecategory("OTHERS");
+              }
+
+              unit.setOccupancytype("SELFOCCUPIED");
+              unit.setOccupancydate(0L);
+              unit.setCarpetarea(BigDecimal.valueOf(
+                      Double.valueOf(legacyRow.getTotalCarpetArea() != null ? legacyRow.getTotalCarpetArea() : "0")));
+
+              // unit.setBuiltuparea(BigDecimal builtuparea)
+              // unit.setPlintharea(BigDecimal plintharea)
+              // unit.setSuperbuiltuparea(BigDecimal superbuiltuparea)
+              unit.setArv(BigDecimal
+                      .valueOf(Double.parseDouble(legacyRow.getRCARV() != null ? legacyRow.getRCARV() : "0")));
+              unit.setConstructiontype("PUCCA");
+              // unit.setConstructiondate(Long constructiondate)
+              // unit.setDimensions(String dimensions)
+              unit.setActive(true);
+              unit.setCreatedby(user.getUuid());
+              unit.setLastmodifiedby(user.getUuid());
+              unit.setCreatedtime(new Date().getTime());
+              unit.setLastmodifiedtime(new Date().getTime());
+              unitExcelRepository.save(unit);
+              failedCode = 3;
+
+              
+              address.setTenantid(tenantId);
+              address.setId(UUID.randomUUID().toString());
+              address.setPropertyid(property.getId());
+              address.setDoorno(legacyRow.getHouseNo());
+              // address.setPlotno(String plotno)
+              // address.setBuildingname(String buildingname)
+              address.setStreet(legacyRow.getAddress());
+              // address.setLandmark(String landmark)
+              address.setCity(legacyRow.getULBName());
+              address.setPincode("123456");
+              address.setLocality(localityCode);
+              // address.setLocality(legacyRow.getLocality() != null? legacyRow.getLocality():
+              // "OTHERS");
+              address.setDistrict(legacyRow.getULBName());
+              // address.setRegion(String region)
+              address.setState("Uttar Pradesh");
+              address.setCountry("India");
+              // address.setLatitude(BigDecimal latitude)
+              // address.setLongitude(BigDecimal longitude)
+              address.setCreatedby(user.getUuid());
+              address.setLastmodifiedby(user.getUuid());
+              address.setCreatedtime(new Date().getTime());
+              address.setLastmodifiedtime(new Date().getTime());
+              address.setTaxward(legacyRow.getTaxWard());
+              address.setWardname(legacyRow.getWardName());
+              address.setWardno(legacyRow.getWardNo());
+              address.setZone(legacyRow.getZone());
+              addressExcelRepository.save(address);
+              failedCode = 4;
+              // address.setAdditionaldetails(String additionaldetails)
+
+              
+              payment.setId(UUID.randomUUID().toString());
+              payment.setPropertyid(property.getId());
+              payment.setFinancialyear(legacyRow.getFinancialYear());
+              payment.setArrearhousetax(BigDecimal.valueOf(
+                      Double.valueOf(legacyRow.getArrearHouseTax() != null ? legacyRow.getArrearHouseTax() : "0")));
+              payment.setArrearwatertax(BigDecimal.valueOf(
+                      Double.valueOf(legacyRow.getArrearWaterTax() != null ? legacyRow.getArrearWaterTax() : "0")));
+              payment.setArrearsewertax(BigDecimal.valueOf(
+                      Double.valueOf(legacyRow.getArrearSewerTax() != null ? legacyRow.getArrearSewerTax() : "0")));
+              payment.setHousetax(BigDecimal
+                      .valueOf(Double.valueOf(legacyRow.getHouseTax() != null ? legacyRow.getHouseTax() : "0")));
+              payment.setWatertax(BigDecimal
+                      .valueOf(Double.valueOf(legacyRow.getWaterTax() != null ? legacyRow.getWaterTax() : "0")));
+              payment.setSewertax(BigDecimal
+                      .valueOf(Double.valueOf(legacyRow.getSewerTax() != null ? legacyRow.getSewerTax() : "0")));
+              payment.setSurcharehousetax(BigDecimal.valueOf(Double
+                      .valueOf(legacyRow.getSurchareHouseTax() != null ? legacyRow.getSurchareHouseTax() : "0")));
+              payment.setSurcharewatertax(BigDecimal.valueOf(Double
+                      .valueOf(legacyRow.getSurchareWaterTax() != null ? legacyRow.getSurchareWaterTax() : "0")));
+              payment.setSurcharesewertax(BigDecimal.valueOf(Double
+                      .valueOf(legacyRow.getSurchareSewerTax() != null ? legacyRow.getSurchareSewerTax() : "0")));
+              payment.setBillgeneratedtotal(BigDecimal.valueOf(Double
+                      .valueOf(legacyRow.getBillGeneratedTotal() != null ? legacyRow.getBillGeneratedTotal() : "0")));
+              payment.setTotalpaidamount(BigDecimal.valueOf(
+                      Double.valueOf(legacyRow.getTotalPaidAmount() != null ? legacyRow.getTotalPaidAmount() : "0")));
+
+              payment.setLastpaymentdate(legacyRow.getLastPaymentDate());
+              propertyPaymentExcelRepository.save(payment);
+              failedCode = 5;
+              numOfSuccess.getAndIncrement();
+              System.out.println("---------------------------------------Success----------------------------------------------------"+numOfSuccess.get());
+              System.out.println("---------------------------------------Error----------------------------------------------------"+numOfErrors.get());
+          } catch (Exception e) {
+              numOfErrors.getAndIncrement();
+//FaieldCodes 1 = failed at owner insertion , 2 = failed at unit insertion , 3 = failed at address insertion , 4 = failed at payment insertion
+              if( failedCode == 1)
+              {
+              	propertyExcelRepository.delete(property);
+              }else if( failedCode == 2)
+              {
+              	ownerExcelRepository.delete(owner);
+              	propertyExcelRepository.delete(property);
+              }else if( failedCode == 3)
+              {
+              	unitExcelRepository.delete(unit);
+              	ownerExcelRepository.delete(owner);
+              	propertyExcelRepository.delete(property);
+              }else if( failedCode == 4)
+              {
+              	addressExcelRepository.delete(address);
+              	unitExcelRepository.delete(unit);
+              	ownerExcelRepository.delete(owner);
+              	propertyExcelRepository.delete(property);
+              }
+              log.info("---------------------------------------No.of Success----------------------------------------------------{} ",numOfSuccess.get());
+              log.info("---------------------------------------No.of Errors----------------------------------------------------{} ",numOfErrors.get());
+              
+            
+              excelService.writeFailedRecords(legacyRow);
+              
+              
+              log.error("Row[{}] - [{}] , errorMessage: {}", row.getRowIndex(), legacyRow.toString(), e.getMessage());
+          }
+    	  });
+    	  
+			
+    	  
+          return true;
+      });
+      
+      
+      if(!executorService.isShutdown())
+      {
+    	  executorService.shutdown();
+    	  
+      }
+      
+      while(true)
+	  {
+    	  Thread.sleep(1000);
+    	  if(totalNumber.get() == numOfErrors.get()+numOfSuccess.get())
+    	  break;
+	  }
+	  
+      excelService.writeToFileandClose();
+      
+      log.info("Import Completed - Success={} Errors={}", numOfSuccess, numOfErrors);
+      
+    
+     
+  }
+  
+    
+    
 }
