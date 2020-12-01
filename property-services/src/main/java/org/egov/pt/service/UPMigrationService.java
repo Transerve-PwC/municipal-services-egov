@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
@@ -28,7 +27,6 @@ import org.egov.pt.models.excel.RowExcel;
 import org.egov.pt.models.excel.Unit;
 import org.egov.pt.models.user.User;
 import org.egov.pt.models.user.UserDetailResponse;
-import org.egov.pt.models.user.UserSearchRequest;
 import org.egov.pt.repository.AddressExcelRepository;
 import org.egov.pt.repository.OwnerExcelRepository;
 import org.egov.pt.repository.PropertyExcelRepository;
@@ -40,10 +38,7 @@ import org.egov.pt.util.PTConstants;
 import org.egov.pt.util.PropertyUtil;
 import org.egov.pt.web.controllers.PropertyController;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-
-import com.jayway.jsonpath.JsonPath;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -104,7 +99,7 @@ public class UPMigrationService {
         userRequest.setMobileNumber((legacyRow.getMobile() != null && legacyRow.getMobile() != ""
                 && (new BigDecimal(legacyRow.getMobile()).longValue() != 0)) ? legacyRow.getMobile()
                         : convertPTINToMobileNumber("5" + legacyRow.getPTIN()));
-        userRequest.setUserName(userRequest.getMobileNumber());
+        userRequest.setUserName(UUID.randomUUID().toString());
         userRequest.setPassword("123456");
         userRequest.setFatherOrHusbandName(legacyRow.getFHName() != null && legacyRow.getFHName().length() > 100
                 ? legacyRow.getFHName().substring(0, 99)
@@ -127,7 +122,7 @@ public class UPMigrationService {
 		
 		  OwnerInfo owner = new OwnerInfo();
 		  owner.setMobileNumber(userRequest.getMobileNumber());
-		  owner.setName(legacyRow.getOwnerName());
+		  owner.setName(name);
 		  owner.setType("CITIZEN"); 
 		  owner.setTenantId("up");
 		  
@@ -138,9 +133,9 @@ public class UPMigrationService {
 
 		  User user = null;
 		  
-		  if(existingUser.containsKey(userRequest.getMobileNumber()) && (existingUser.get(userRequest.getMobileNumber()) != null))
+		  if(existingUser.containsKey(userRequest.getMobileNumber().trim()+userRequest.getName().trim()) && (existingUser.get(userRequest.getMobileNumber().trim()+userRequest.getName().trim()) != null))
 		  {
-			   user = existingUser.get(userRequest.getMobileNumber());
+			   user = existingUser.get(userRequest.getMobileNumber().trim()+userRequest.getName().trim());
 		  }
 		  else {
 			  UserDetailResponse userDetailResponse = userService.userExists(owner,userCreateRequestInfo1);
@@ -186,9 +181,16 @@ public class UPMigrationService {
              
                  try {
 					legacyRow = legacyExcelRowMapper.map(row);
-					  if(!duplicateMobileNumbers.add(legacyRow.getMobile()))
+					
+					String name = legacyRow.getOwnerName() != null && legacyRow.getOwnerName() != "" ? legacyRow.getOwnerName()
+			                : "Owner of " + legacyRow.getPTIN();
+			        // Invalid name. Only alphabets and special characters -, ',`, .
+			        name = name.replaceAll("[\\$\"'<>?\\\\~`!@#$%^()+={}\\[\\]*,.:;“”‘’]*", "");
+			        name = name.length() > 100 ? name.substring(0, 99) : name;
+					
+					  if(!duplicateMobileNumbers.add(legacyRow.getMobile().trim()+name.trim()))
 					  {
-						  existingUser.put(legacyRow.getMobile(), null);
+						  existingUser.put(legacyRow.getMobile().trim()+name.trim(), null);
 					  }
 					  
 				} catch (Exception e) {
@@ -203,7 +205,6 @@ public class UPMigrationService {
         
         existingUser.forEach((key, value) -> {log.info("Key: {}",  key );});
         
-        	
         excelService.read(file, skip, limit, (RowExcel row) -> {
             LegacyRow legacyRow = null;
             try {
@@ -372,13 +373,25 @@ public class UPMigrationService {
                 numOfSuccess.getAndIncrement();
             } catch (Exception e) {
                 numOfErrors.getAndIncrement();
+                
+                if(numOfErrors.get() == 1)
+                {
+                	excelService.createFailedRecordsFile();
+                }
+                
+                excelService.writeFailedRecords(legacyRow);
+                
+                
                 log.error("Row[{}] - [{}] , errorMessage: {}", row.getRowIndex(), legacyRow.toString(), e.getMessage());
             }
             return true;
         });
         log.info("Import Completed - Success={} Errors={}", numOfSuccess, numOfErrors);
+        excelService.writeToFileandClose();
+      
     }
-
+    
+ 
     private String convertPTINToMobileNumber(String ptin) {
         String curPtin = ptin;
         while (curPtin.length() < 9) {

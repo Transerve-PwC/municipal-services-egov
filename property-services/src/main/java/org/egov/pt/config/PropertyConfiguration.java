@@ -317,4 +317,7 @@ public class PropertyConfiguration {
     @Value("${egov.migration.filename}")
     private String migrationFileName ;
     
+    @Value("${migration.failedrecords.path}")
+    private String failedRecordsMigrationFilePath ;
+    
 }
