@@ -64,7 +64,7 @@ public class ExcelService {
 		workbook.close();
 	}
 
-	public void writeFailedRecords(LegacyRow  legacyrow)
+	public synchronized void  writeFailedRecords(LegacyRow  legacyrow)
 	{
 
 		try {
@@ -103,7 +103,7 @@ public class ExcelService {
 
 
 
-	public void writeToFileandClose()
+	public synchronized void writeToFileandClose()
 	{
 		if(workbook != null)
 		{
@@ -128,7 +128,7 @@ public class ExcelService {
 	}
 
 
-	public Workbook getWorkBook()
+	public synchronized Workbook getWorkBook()
 	{
 		if(workbook == null)
 		{
@@ -147,7 +147,7 @@ public class ExcelService {
 	}
 
 
-	public void createFailedRecordsFile()
+	public synchronized void   createFailedRecordsFile()
 	{
 		File f = new File(config.getFailedRecordsMigrationFilePath());
 
