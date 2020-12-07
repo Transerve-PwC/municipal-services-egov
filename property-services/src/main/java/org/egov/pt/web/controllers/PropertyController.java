@@ -13,6 +13,7 @@ import org.egov.pt.config.PropertyConfiguration;
 import org.egov.pt.models.Property;
 import org.egov.pt.models.PropertyCriteria;
 import org.egov.pt.models.oldProperty.OldPropertyCriteria;
+import org.egov.pt.service.BoundaryJsonGenerationService;
 import org.egov.pt.service.MigrationService;
 import org.egov.pt.service.PropertyService;
 import org.egov.pt.service.UPMigrationService;
@@ -31,6 +32,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 
 @Controller
 @RequestMapping("/property")
@@ -55,6 +60,9 @@ public class PropertyController {
 	
 	@Autowired
 	private PropertyConfiguration config;
+	
+	@Autowired
+	private BoundaryJsonGenerationService boundaryJson ;
 	
 
 	@PostMapping("/_create")
@@ -148,7 +156,7 @@ public class PropertyController {
 		if(parallelProcessing)			
 		upMigrationService.importPropertiesParallel(excelFile, matchedFile, skip, limit);
 		else
-			upMigrationService.importProperties(excelFile, matchedFile, skip, limit);
+		upMigrationService.importProperties(excelFile, matchedFile, skip, limit);
 		
 		long endtime = System.nanoTime();
 		long elapsetime = endtime - startTime;
@@ -156,4 +164,44 @@ public class PropertyController {
 
 		return new ResponseEntity<>(true, HttpStatus.OK);
 	}
+	
+	@PostMapping("/_createboundaries")
+	public ResponseEntity<?> createBoundariesLocalityJson(@RequestParam(required = true) String tenantId,
+			@RequestParam(required = false, defaultValue = "egov-location") String moduleName ,@RequestParam(required = true) String cityName ) throws Exception {
+		long startTime = System.nanoTime();
+		
+		JsonObject result = boundaryJson.createBoundaryJson(tenantId, moduleName, cityName);
+		String jsonOutput = "" ;
+		if(result != null)
+		{
+		Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		 jsonOutput = gson.toJson(result);
+		}
+		
+		long endtime = System.nanoTime();
+		long elapsetime = endtime - startTime;
+		System.out.println("Elapsed time--->" + elapsetime);
+
+		return new ResponseEntity<>(jsonOutput, HttpStatus.OK);
+	}
+	
+	@PostMapping("/_createcategories")
+	public ResponseEntity<?> createCategoriesJson(@RequestParam(required = false, defaultValue = "category") String label ) throws Exception {
+		long startTime = System.nanoTime();
+		
+		JsonObject categoriesArrayObj = boundaryJson.generateCategoriesJson(label);
+		String jsonOutput = "" ;
+		if(categoriesArrayObj != null)
+		{
+		Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		jsonOutput = gson.toJson(categoriesArrayObj);
+		}
+		
+		long endtime = System.nanoTime();
+		long elapsetime = endtime - startTime;
+		System.out.println("Elapsed time--->" + elapsetime);
+
+		return new ResponseEntity<>(jsonOutput, HttpStatus.OK);
+	}
+	
 }
