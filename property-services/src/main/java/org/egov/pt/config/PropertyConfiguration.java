@@ -320,4 +320,17 @@ public class PropertyConfiguration {
     @Value("${migration.failedrecords.path}")
     private String failedRecordsMigrationFilePath ;
     
+    @Value("${egov.boundary.bareilly.filename}")
+    private String bareillyBoundaryFile ;
+    
+    
+    @Value("${egov.boundary.moradabad.filename}")
+    private String moradabadBoundaryFile ;
+    
+    
+    @Value("${egov.categories.filename}")
+    private String categoriesFile ;
+    
+    
+    
 }
