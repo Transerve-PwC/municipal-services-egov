@@ -96,13 +96,21 @@ public class Property extends PropertyInfo {
 	@JsonProperty("workflow")
 	private ProcessInstance workflow;
 	
+	@JsonProperty("roadWidth")
+	private String roadWidth;
+	
+	@JsonProperty("constructionYear")
+	private String constructionYear;
+	
+	
+	
 	@Builder
 	public Property(String id, String propertyId, String surveyId, List<String> linkedProperties, String tenantId,
 			String accountId, String oldPropertyId, Status status, Address address, String acknowldgementNumber,
 			String propertyType, String ownershipCategory, List<OwnerInfo> owners, Institution institution,
 			CreationReason creationReason, String usageCategory, Long noOfFloors, Double landArea,
 			BigDecimal superBuiltUpArea, Source source, Channel channel, List<Document> documents, List<Unit> units,
-			JsonNode additionalDetails, AuditDetails auditDetails, ProcessInstance workflow) {
+			JsonNode additionalDetails, AuditDetails auditDetails, ProcessInstance workflow , String roadWidth , String constructionYear) {
 		super(id, propertyId, surveyId, linkedProperties, tenantId, accountId, oldPropertyId, status, address);
 		this.acknowldgementNumber = acknowldgementNumber;
 		this.propertyType = propertyType;
@@ -121,6 +129,8 @@ public class Property extends PropertyInfo {
 		this.additionalDetails = additionalDetails;
 		this.auditDetails = auditDetails;
 		this.workflow = workflow;
+		this.roadWidth = roadWidth;
+		this.constructionYear = constructionYear;
 	}
 
 	public Property addOwnersItem(OwnerInfo ownersItem) {

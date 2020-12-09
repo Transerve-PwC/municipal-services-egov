@@ -300,7 +300,7 @@ public class BoundaryJsonGenerationService {
 						locality.addProperty("boundaryNum", 1);
 						locality.addProperty("name", localityDetails.get(0));
 						locality.addProperty("localname", localityDetails.get(0));
-						locality.addProperty("label", "locality");
+						locality.addProperty("label", "Locality");
 						locality.addProperty("area", "Area1");
 						locality.addProperty("code", "BAR00"+localityIncrementer );
 						idIncrementer++;
