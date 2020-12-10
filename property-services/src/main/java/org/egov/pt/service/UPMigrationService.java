@@ -101,7 +101,7 @@ public class UPMigrationService {
         userRequest.setMobileNumber((legacyRow.getMobile() != null && legacyRow.getMobile() != ""
                 && (new BigDecimal(legacyRow.getMobile()).longValue() != 0)) ? legacyRow.getMobile()
                         : convertPTINToMobileNumber("5" + legacyRow.getPTIN()));
-        userRequest.setUserName(UUID.randomUUID().toString());
+        userRequest.setUserName(userRequest.getMobileNumber());
         userRequest.setPassword("123456");
         userRequest.setFatherOrHusbandName(legacyRow.getFHName() != null && legacyRow.getFHName().length() > 100
                 ? legacyRow.getFHName().substring(0, 99)
@@ -150,7 +150,14 @@ public class UPMigrationService {
 
 		  if(user == null)
 		  {
-			  UserDetailResponse  userDetailResponse1 = userService.createUser(userCreateRequestInfo, userRequest); 
+			  UserDetailResponse userDetailResponse1 = null;
+			try {
+				userDetailResponse1 = userService.createUser(userCreateRequestInfo, userRequest);
+			} catch (Exception e) {
+				log.error(" duplicate phone number hence creating duplicate user  " );
+				 userRequest.setUserName(UUID.randomUUID().toString());
+				userDetailResponse1 = userService.createUser(userCreateRequestInfo, userRequest);
+			} 
 			  user = userDetailResponse1.getUser().get(0);
 			  existingUser.put(userRequest.getMobileNumber(), user);
 		  }
