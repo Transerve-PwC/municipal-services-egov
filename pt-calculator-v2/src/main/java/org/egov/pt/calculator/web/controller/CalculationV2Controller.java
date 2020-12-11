@@ -14,10 +14,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import lombok.extern.slf4j.Slf4j;
+
 import javax.validation.Valid;
 
 @Controller
 @RequestMapping("/propertytax/v2")
+@Slf4j
 public class CalculationV2Controller {
 
 
@@ -35,7 +38,10 @@ public class CalculationV2Controller {
     @PostMapping("/_estimate")
     public ResponseEntity<CalculationRes> getTaxEstimation(@RequestBody @Valid AssessmentRequestV2 assessmentRequestV2) {
 
+    	log.info("===================== M[getTaxEstimation] assessmentRequestV2  {}",assessmentRequestV2.getAssessment().toString());
         CalculationReq calculationReq = translationService.translate(assessmentRequestV2);
+        log.info("===================== M[getTaxEstimation] calculationReq  {}",calculationReq.getCalculationCriteria().get(0).toString());
+        
         return new ResponseEntity<>(estimationService.getTaxCalculation(calculationReq), HttpStatus.OK);
 
     }

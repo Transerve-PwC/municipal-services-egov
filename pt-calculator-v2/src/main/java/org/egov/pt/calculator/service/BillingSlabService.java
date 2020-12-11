@@ -95,6 +95,8 @@ public class BillingSlabService {
 		List<BillingSlab> billingSlabs = null;
 		try {
 			billingSlabs = dbRepository.searchBillingSlab(billingSlabSearcCriteria);
+			log.info(" billingSlabs  are {} ",billingSlabs);
+			log.info(" billingSlabs  size is {} ",billingSlabs.size());
 		} catch (Exception e) {
 			log.error("Exception while fetching billing slabs from db: " + e);
 			billingSlabs = new ArrayList<>();
