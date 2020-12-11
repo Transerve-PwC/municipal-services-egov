@@ -40,7 +40,8 @@ public class PTCalculatorDBRepository {
 		
 		List<Object> preparedStmtList = new ArrayList<>();
 		String query = billingSlabQueryBuilder.getBillingSlabSearchQuery(billingSlabSearcCriteria, preparedStmtList);
-		log.debug("Query: "+query);
+		log.info(" billingSlabQueryBuilder  Query: {}",query);
+		log.info(" preparedStmtList for Query: {}",preparedStmtList.toString());
 		return jdbcTemplate.query(query, preparedStmtList.toArray(), billingSlabRowMapper);
 	}
 

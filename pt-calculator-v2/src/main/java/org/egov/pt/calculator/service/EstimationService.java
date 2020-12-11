@@ -152,6 +152,7 @@ public class EstimationService {
         PropertyDetail detail = property.getPropertyDetails().get(0);
         calcValidator.validatePropertyForCalculation(detail);
         Map<String,Object> masterMap = mDataService.getMasterMap(request);
+        log.info("=====================  M[getTaxCalculation]   masterMap {}",masterMap);
         return new CalculationRes(new ResponseInfo(), Collections.singletonList(getCalculation(request.getRequestInfo(), criteria, masterMap)));
     }
 
@@ -181,6 +182,8 @@ public class EstimationService {
 		Map<String, JSONArray> timeBasedExemptionMasterMap = new HashMap<>();
 		mDataService.setPropertyMasterValues(requestInfo, tenantId, propertyBasedExemptionMasterMap,
 				timeBasedExemptionMasterMap);
+		
+		log.info("=====================  propertyBasedExemptionMasterMap   {}",propertyBasedExemptionMasterMap.toString());
 
 		List<String> billingSlabIds = new LinkedList<>();
 
@@ -201,6 +204,8 @@ public class EstimationService {
 			int i = 0;
 
 			for (Unit unit : detail.getUnits()) {
+				
+				log.info( "===================== M[getEstimationMap] looping the given units==================  ");
 
 				BillingSlab slab = getSlabForCalc(filteredBillingSlabs, unit);
 				BigDecimal currentUnitTax = getTaxForUnit(slab, unit);
@@ -298,12 +303,19 @@ public class EstimationService {
 	 * @return calculated tax amount for the incoming unit
 	 */
 	private BigDecimal getTaxForUnit(BillingSlab slab, Unit unit) {
+		
+		log.info(" ========= M[getTaxForUnit] calculating tax for unit  ==============   ");
 
 		boolean isUnitCommercial = unit.getUsageCategoryMajor().equalsIgnoreCase(configs.getUsageMajorNonResidential());
 		boolean isUnitRented = unit.getOccupancyType().equalsIgnoreCase(configs.getOccupancyTypeRented());
 		BigDecimal currentUnitTax;
 
         if (null == slab) {
+        	
+        	log.info(" ========= M[getTaxForUnit] slab is null==============   ");
+        	
+        	log.info(" ========= M[getTaxForUnit]  unit.getUnitArea().toString()============== {}  ",unit.getUnitArea().toString());
+        	
             String msg = BILLING_SLAB_MATCH_ERROR_MESSAGE
                     .replace(BILLING_SLAB_MATCH_AREA, unit.getUnitArea().toString())
                     .replace(BILLING_SLAB_MATCH_FLOOR, unit.getFloorNo())
@@ -450,6 +462,9 @@ public class EstimationService {
 
 		List<TaxHeadEstimate> estimates = estimatesAndBillingSlabs.get("estimates");
 		List<String> billingSlabIds = estimatesAndBillingSlabs.get("billingSlabIds");
+		
+		log.info("===================== List<TaxHeadEstimate> size {}",estimates.size());
+		log.info("===================== List<TaxHeadEstimate>  {}",estimates.toArray().toString());
 
         Property property = criteria.getProperty();
         PropertyDetail detail = property.getPropertyDetails().get(0);
@@ -470,6 +485,9 @@ public class EstimationService {
 		for (TaxHeadEstimate estimate : estimates) {
 
 			Category category = taxHeadCategoryMap.get(estimate.getTaxHeadCode());
+			log.info("  ===================== M[getCalculation] category {} ",category.name());
+			log.info("  ===================== M[getCalculation] TaxHeadEstimate {} ",estimate.toString());
+			
 			estimate.setCategory(category);
 
 			switch (category) {
@@ -545,7 +563,7 @@ public class EstimationService {
 		List<BillingSlab> billingSlabs = billingSlabService.searchBillingSlabs(requestInfo, slabSearchCriteria)
 				.getBillingSlab();
 
-		log.debug(" the slabs count : " + billingSlabs.size());
+		log.info(" the slabs count : {}", billingSlabs.size());
 		final String all = configs.getSlabValueAll();
 
 		Double plotSize = null != detail.getLandArea() ? detail.getLandArea() : detail.getBuildUpArea();
