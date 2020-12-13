@@ -92,6 +92,8 @@ public class TranslationService {
 
         propertyDetail.put("channel", property.getChannel());
         propertyDetail.put("noOfFloors", property.getNoOfFloors());
+        propertyDetail.put("roadWidth", property.getRoadWidth());
+        propertyDetail.put("constructionYear", property.getConstructionYear());
         propertyDetail.put("landArea", property.getLandArea());
         propertyDetail.put("buildUpArea", property.getSuperBuiltUpArea());
         propertyDetail.put("financialYear", assessment.getFinancialYear());
@@ -142,6 +144,8 @@ public class TranslationService {
                 unitMap.put("floorNo", unit.getFloorNo());
                 unitMap.put("unitArea", unit.getConstructionDetail().getBuiltUpArea());
                 unitMap.put("arv", unit.getArv());
+                unitMap.put("constructionType", unit.getConstructionDetail().getConstructionType());
+                unitMap.put("category", unit.getCategory());
                 unitMap.put("occupancyType", unit.getOccupancyType());
 
                 String[] masterData = unit.getUsageCategory().split("\\.");
