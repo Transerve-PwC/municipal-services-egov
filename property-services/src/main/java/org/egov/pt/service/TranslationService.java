@@ -96,6 +96,7 @@ public class TranslationService {
         propertyDetail.put("constructionYear", property.getConstructionYear());
         propertyDetail.put("landArea", property.getLandArea());
         propertyDetail.put("buildUpArea", property.getSuperBuiltUpArea());
+        propertyDetail.put("additionalDetails", property.getAdditionalDetails());
         propertyDetail.put("financialYear", assessment.getFinancialYear());
         propertyDetail.put("propertyType", propertyType);
         propertyDetail.put("propertySubType", propertySubType);
