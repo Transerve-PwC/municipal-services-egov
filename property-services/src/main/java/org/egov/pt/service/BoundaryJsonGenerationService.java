@@ -302,7 +302,13 @@ public class BoundaryJsonGenerationService {
 						locality.addProperty("localname", localityDetails.get(0));
 						locality.addProperty("label", "Locality");
 						locality.addProperty("area", "Area1");
+						if(cityName.equalsIgnoreCase("bareilly"))
+						{
 						locality.addProperty("code", "BAR00"+localityIncrementer );
+						}else if(cityName.equalsIgnoreCase("moradabad"))
+						{
+						locality.addProperty("code", "MOR00"+localityIncrementer );
+						}
 						idIncrementer++;
 						localityIncrementer++;
 

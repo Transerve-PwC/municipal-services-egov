@@ -154,7 +154,7 @@ public class UPMigrationService {
 			try {
 				userDetailResponse1 = userService.createUser(userCreateRequestInfo, userRequest);
 			} catch (Exception e) {
-				log.error(" duplicate phone number hence creating duplicate user  " );
+				log.error(" duplicate phone number hence creating duplicate user for mobilenumber {}",userRequest.getUserName() );
 				 userRequest.setUserName(UUID.randomUUID().toString());
 				userDetailResponse1 = userService.createUser(userCreateRequestInfo, userRequest);
 			} 
@@ -243,6 +243,22 @@ public class UPMigrationService {
                 String localityCode = localityMap.get(legacyRow.getLocality().trim().toLowerCase());
                 if (localityCode == null) {
                     log.warn("Empty locality code for the property {}", legacyRow.getLocality());
+                }
+                
+                if(tenantId.equalsIgnoreCase("up.Bareilly"))
+                {
+              	  HashMap<String,HashMap<String,HashMap<String, String>>> duplicateMap = cachebaleservice.getDuplicateLocalitiesMap(tenantId, requestinfo);
+              	  if(duplicateMap.containsKey(legacyRow.getLocality().trim().toLowerCase()))
+              	  {
+              		  String zone = legacyRow.getZone();
+              		  String wardNo = legacyRow.getWardNo();
+              		
+              		  wardNo = wardNo.replace(".0", "");
+              		  zone = zone.replaceAll("Zone-", "");
+              		  
+              		  localityCode = duplicateMap.get(legacyRow.getLocality().trim().toLowerCase()).get(zone).get(wardNo);
+              	  }            	  
+              	  
                 }
 
                 // Generate unique property id and acknowledgement no
@@ -353,8 +369,22 @@ public class UPMigrationService {
                 address.setLastmodifiedtime(new Date().getTime());
                 address.setTaxward(legacyRow.getTaxWard());
                 address.setWardname(legacyRow.getWardName());
-                address.setWardno(legacyRow.getWardNo());
-                address.setZone(legacyRow.getZone());
+                Map<String, String>  wardsMap = cachebaleservice.getWardMap(tenantId, requestinfo);
+                Map<String, String> zonesMap = cachebaleservice.getZoneMap(tenantId, requestinfo);
+               
+                String zoneCode = zonesMap.get(localityCode);
+                String wardCode = wardsMap.get(localityCode);
+                
+                if (zoneCode == null) {
+                    log.warn("Empty zones code for the property {}", legacyRow.getLocality());
+                }
+                
+                if (wardsMap == null) {
+                    log.warn("Empty wards code for the property {}", legacyRow.getLocality());
+                }
+                
+                address.setWardno(wardCode);
+                address.setZone(zoneCode);
                 addressExcelRepository.save(address);
                 failedCode = 4;
                 // address.setAdditionaldetails(String additionaldetails)
@@ -513,7 +543,6 @@ public class UPMigrationService {
               // Create user if not exists in db.
               User user = this.createUserIfNotExists(legacyRow , existingUser);
 
-				
 				  String token = cachebaleservice.getUserToken(tenantId, user);
 				 
 
@@ -527,6 +556,23 @@ public class UPMigrationService {
               String localityCode = localityMap.get(legacyRow.getLocality().trim().toLowerCase());
               if (localityCode == null) {
                   log.warn("Empty locality code for the property {}", legacyRow.getLocality());
+              }
+              
+              
+              if(tenantId.equalsIgnoreCase("up.Bareilly"))
+              {
+            	  HashMap<String,HashMap<String,HashMap<String, String>>> duplicateMap = cachebaleservice.getDuplicateLocalitiesMap(tenantId, requestinfo);
+            	  if(duplicateMap.containsKey(legacyRow.getLocality().trim().toLowerCase()))
+            	  {
+            		  String zone = legacyRow.getZone();
+            		  String wardNo = legacyRow.getWardNo();
+            		
+            		  wardNo = wardNo.replace(".0", "");
+            		  zone = zone.replaceAll("Zone-", "");
+            		  
+            		  localityCode = duplicateMap.get(legacyRow.getLocality().trim().toLowerCase()).get(zone).get(wardNo);
+            	  }            	  
+            	  
               }
 
               // Generate unique property id and acknowledgement no
@@ -637,8 +683,25 @@ public class UPMigrationService {
               address.setLastmodifiedtime(new Date().getTime());
               address.setTaxward(legacyRow.getTaxWard());
               address.setWardname(legacyRow.getWardName());
-              address.setWardno(legacyRow.getWardNo());
-              address.setZone(legacyRow.getZone());
+              
+              Map<String, String>  wardsMap = cachebaleservice.getWardMap(tenantId, requestinfo);
+              Map<String, String> zonesMap = cachebaleservice.getZoneMap(tenantId, requestinfo);
+              
+             
+              
+              String zoneCode = zonesMap.get(localityCode);
+              String wardCode = wardsMap.get(localityCode);
+              
+              if (zoneCode == null) {
+                  log.warn("Empty zones code for the property {}", legacyRow.getLocality());
+              }
+              
+              if (wardsMap == null) {
+                  log.warn("Empty wards code for the property {}", legacyRow.getLocality());
+              }
+              
+              address.setWardno(wardCode);
+              address.setZone(zoneCode);
               addressExcelRepository.save(address);
               failedCode = 4;
               // address.setAdditionaldetails(String additionaldetails)
