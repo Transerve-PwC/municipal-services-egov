@@ -55,7 +55,8 @@ public class Cachebaleservice {
 	            localityMap.put("Gyani_Wali_Basti", "MOR0061");
 	            localityMap.put("Kumar_Kunj", "MOR00201");
 	            localityMap.put("Majholi", "MOR00134");
-	            return localityMap;
+	            
+	            return ((HashMap<String, String>) localityMap).entrySet().parallelStream().collect(Collectors.toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue));
 	        }
 	        if (TENANTS_BAREILLY.equalsIgnoreCase(tenantId)) {
 	            StringBuilder uri = new StringBuilder(config.getMdmsHost()).append(config.getMdmsEndpoint());
