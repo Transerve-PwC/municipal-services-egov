@@ -94,7 +94,7 @@ public class UPMigrationService {
     private static final RequestInfo userCreateRequestInfo = RequestInfo.builder().action("_create").apiId("Rainmaker")
             .did("1").key("").msgId("20170310130900|en_IN").ver(".01").build();
 
-    private User createUserIfNotExists(LegacyRow legacyRow, HashMap<String, User> existingUser) {
+    private synchronized User  createUserIfNotExists(LegacyRow legacyRow, HashMap<String, User> existingUser) {
         final String tenantId = "up." + legacyRow.getULBName().toLowerCase();
         User userRequest = new User();
         userRequest.setActive(true);
@@ -159,8 +159,8 @@ public class UPMigrationService {
 				userDetailResponse1 = userService.createUser(userCreateRequestInfo, userRequest);
 			} 
 			  user = userDetailResponse1.getUser().get(0);
-			  existingUser.put(userRequest.getMobileNumber(), user);
 		  }
+		  existingUser.put(userRequest.getMobileNumber().trim()+userRequest.getName().trim(), user);
 
         return user;
     }
