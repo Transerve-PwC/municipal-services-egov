@@ -285,7 +285,7 @@ public class UPMigrationService {
                 }
                 property.setNooffloors(1L);
                 property.setLandarea(BigDecimal
-                        .valueOf(Double.valueOf(legacyRow.getPlotArea() != null ? legacyRow.getPlotArea() : "0")));
+                        .valueOf(Double.valueOf(legacyRow.getPlotArea() != null && !legacyRow.getPlotArea().isEmpty() ? legacyRow.getPlotArea() : "0")));
                 property.setOldpropertyid(legacyRow.getPTIN());
                 property.setSource("DATA_MIGRATION");
                 property.setChannel(Channel.MIGRATION.toString());
@@ -327,13 +327,13 @@ public class UPMigrationService {
                 unit.setOccupancytype("SELFOCCUPIED");
                 unit.setOccupancydate(0L);
                 unit.setCarpetarea(BigDecimal.valueOf(
-                        Double.valueOf(legacyRow.getTotalCarpetArea() != null ? legacyRow.getTotalCarpetArea() : "0")));
+                        Double.valueOf(legacyRow.getTotalCarpetArea() != null && !legacyRow.getTotalCarpetArea().isEmpty() ? legacyRow.getTotalCarpetArea() : "0")));
 
                 // unit.setBuiltuparea(BigDecimal builtuparea)
                 // unit.setPlintharea(BigDecimal plintharea)
                 // unit.setSuperbuiltuparea(BigDecimal superbuiltuparea)
                 unit.setArv(BigDecimal
-                        .valueOf(Double.parseDouble(legacyRow.getRCARV() != null ? legacyRow.getRCARV() : "0")));
+                        .valueOf(Double.parseDouble(legacyRow.getRCARV() != null && !legacyRow.getRCARV().isEmpty() ? legacyRow.getRCARV() : "0")));
                 unit.setConstructiontype("PUCCA");
                 // unit.setConstructiondate(Long constructiondate)
                 // unit.setDimensions(String dimensions)
@@ -396,27 +396,27 @@ public class UPMigrationService {
                 payment.setPropertyid(property.getId());
                 payment.setFinancialyear(legacyRow.getFinancialYear());
                 payment.setArrearhousetax(BigDecimal.valueOf(
-                        Double.valueOf(legacyRow.getArrearHouseTax() != null ? legacyRow.getArrearHouseTax() : "0")));
+                        Double.valueOf(legacyRow.getArrearHouseTax() != null && !legacyRow.getArrearHouseTax().isEmpty() ? legacyRow.getArrearHouseTax() : "0")));
                 payment.setArrearwatertax(BigDecimal.valueOf(
-                        Double.valueOf(legacyRow.getArrearWaterTax() != null ? legacyRow.getArrearWaterTax() : "0")));
+                        Double.valueOf(legacyRow.getArrearWaterTax() != null && !legacyRow.getArrearWaterTax().isEmpty() ? legacyRow.getArrearWaterTax() : "0")));
                 payment.setArrearsewertax(BigDecimal.valueOf(
-                        Double.valueOf(legacyRow.getArrearSewerTax() != null ? legacyRow.getArrearSewerTax() : "0")));
+                        Double.valueOf(legacyRow.getArrearSewerTax() != null  &&  !legacyRow.getArrearSewerTax().isEmpty() ? legacyRow.getArrearSewerTax() : "0")));
                 payment.setHousetax(BigDecimal
-                        .valueOf(Double.valueOf(legacyRow.getHouseTax() != null ? legacyRow.getHouseTax() : "0")));
+                        .valueOf(Double.valueOf(legacyRow.getHouseTax() != null && !legacyRow.getHouseTax().isEmpty() ? legacyRow.getHouseTax() : "0")));
                 payment.setWatertax(BigDecimal
-                        .valueOf(Double.valueOf(legacyRow.getWaterTax() != null ? legacyRow.getWaterTax() : "0")));
+                        .valueOf(Double.valueOf(legacyRow.getWaterTax() != null && !legacyRow.getWaterTax().isEmpty() ?  legacyRow.getWaterTax() : "0")));
                 payment.setSewertax(BigDecimal
-                        .valueOf(Double.valueOf(legacyRow.getSewerTax() != null ? legacyRow.getSewerTax() : "0")));
+                        .valueOf(Double.valueOf(legacyRow.getSewerTax() != null && !legacyRow.getSewerTax().isEmpty() ? legacyRow.getSewerTax() : "0")));
                 payment.setSurcharehousetax(BigDecimal.valueOf(Double
-                        .valueOf(legacyRow.getSurchareHouseTax() != null ? legacyRow.getSurchareHouseTax() : "0")));
+                        .valueOf(legacyRow.getSurchareHouseTax() != null  && !legacyRow.getSurchareHouseTax().isEmpty() ? legacyRow.getSurchareHouseTax() : "0")));
                 payment.setSurcharewatertax(BigDecimal.valueOf(Double
-                        .valueOf(legacyRow.getSurchareWaterTax() != null ? legacyRow.getSurchareWaterTax() : "0")));
+                        .valueOf(legacyRow.getSurchareWaterTax() != null  && !legacyRow.getSurchareWaterTax().isEmpty() ? legacyRow.getSurchareWaterTax() : "0")));
                 payment.setSurcharesewertax(BigDecimal.valueOf(Double
-                        .valueOf(legacyRow.getSurchareSewerTax() != null ? legacyRow.getSurchareSewerTax() : "0")));
+                        .valueOf(legacyRow.getSurchareSewerTax() != null && !legacyRow.getSurchareSewerTax().isEmpty() ? legacyRow.getSurchareSewerTax() : "0")));
                 payment.setBillgeneratedtotal(BigDecimal.valueOf(Double
-                        .valueOf(legacyRow.getBillGeneratedTotal() != null ? legacyRow.getBillGeneratedTotal() : "0")));
+                        .valueOf(legacyRow.getBillGeneratedTotal() != null && !legacyRow.getBillGeneratedTotal().isEmpty() ? legacyRow.getBillGeneratedTotal() : "0")));
                 payment.setTotalpaidamount(BigDecimal.valueOf(
-                        Double.valueOf(legacyRow.getTotalPaidAmount() != null ? legacyRow.getTotalPaidAmount() : "0")));
+                        Double.valueOf(legacyRow.getTotalPaidAmount() != null && !legacyRow.getTotalPaidAmount().isEmpty() ? legacyRow.getTotalPaidAmount() : "0")));
 
                 payment.setLastpaymentdate(legacyRow.getLastPaymentDate());
                 propertyPaymentExcelRepository.save(payment);
@@ -602,7 +602,7 @@ public class UPMigrationService {
               }
               property.setNooffloors(1L);
               property.setLandarea(BigDecimal
-                      .valueOf(Double.valueOf(legacyRow.getPlotArea() != null ? legacyRow.getPlotArea() : "0")));
+                      .valueOf(Double.valueOf(legacyRow.getPlotArea() != null &&  !legacyRow.getPlotArea().isEmpty() ? legacyRow.getPlotArea() : "0")));
               property.setOldpropertyid(legacyRow.getPTIN());
               property.setSource("DATA_MIGRATION");
               property.setChannel(Channel.MIGRATION.toString());
@@ -644,13 +644,13 @@ public class UPMigrationService {
               unit.setOccupancytype("SELFOCCUPIED");
               unit.setOccupancydate(0L);
               unit.setCarpetarea(BigDecimal.valueOf(
-                      Double.valueOf(legacyRow.getTotalCarpetArea() != null ? legacyRow.getTotalCarpetArea() : "0")));
+                      Double.valueOf(legacyRow.getTotalCarpetArea() != null && !legacyRow.getTotalCarpetArea().isEmpty() ? legacyRow.getTotalCarpetArea() : "0")));
 
               // unit.setBuiltuparea(BigDecimal builtuparea)
               // unit.setPlintharea(BigDecimal plintharea)
               // unit.setSuperbuiltuparea(BigDecimal superbuiltuparea)
               unit.setArv(BigDecimal
-                      .valueOf(Double.parseDouble(legacyRow.getRCARV() != null ? legacyRow.getRCARV() : "0")));
+                      .valueOf(Double.parseDouble(legacyRow.getRCARV() != null && !legacyRow.getRCARV().isEmpty() ? legacyRow.getRCARV() : "0")));
               unit.setConstructiontype("PUCCA");
               // unit.setConstructiondate(Long constructiondate)
               // unit.setDimensions(String dimensions)
@@ -716,27 +716,27 @@ public class UPMigrationService {
               payment.setPropertyid(property.getId());
               payment.setFinancialyear(legacyRow.getFinancialYear());
               payment.setArrearhousetax(BigDecimal.valueOf(
-                      Double.valueOf(legacyRow.getArrearHouseTax() != null ? legacyRow.getArrearHouseTax() : "0")));
+                      Double.valueOf(legacyRow.getArrearHouseTax() != null && !legacyRow.getArrearHouseTax().isEmpty() ? legacyRow.getArrearHouseTax() : "0")));
               payment.setArrearwatertax(BigDecimal.valueOf(
-                      Double.valueOf(legacyRow.getArrearWaterTax() != null ? legacyRow.getArrearWaterTax() : "0")));
+                      Double.valueOf(legacyRow.getArrearWaterTax() != null && !legacyRow.getArrearWaterTax().isEmpty() ? legacyRow.getArrearWaterTax() : "0")));
               payment.setArrearsewertax(BigDecimal.valueOf(
-                      Double.valueOf(legacyRow.getArrearSewerTax() != null ? legacyRow.getArrearSewerTax() : "0")));
+                      Double.valueOf(legacyRow.getArrearSewerTax() != null  &&  !legacyRow.getArrearSewerTax().isEmpty() ? legacyRow.getArrearSewerTax() : "0")));
               payment.setHousetax(BigDecimal
-                      .valueOf(Double.valueOf(legacyRow.getHouseTax() != null ? legacyRow.getHouseTax() : "0")));
+                      .valueOf(Double.valueOf(legacyRow.getHouseTax() != null && !legacyRow.getHouseTax().isEmpty() ? legacyRow.getHouseTax() : "0")));
               payment.setWatertax(BigDecimal
-                      .valueOf(Double.valueOf(legacyRow.getWaterTax() != null ? legacyRow.getWaterTax() : "0")));
+                      .valueOf(Double.valueOf(legacyRow.getWaterTax() != null && !legacyRow.getWaterTax().isEmpty() ?  legacyRow.getWaterTax() : "0")));
               payment.setSewertax(BigDecimal
-                      .valueOf(Double.valueOf(legacyRow.getSewerTax() != null ? legacyRow.getSewerTax() : "0")));
+                      .valueOf(Double.valueOf(legacyRow.getSewerTax() != null && !legacyRow.getSewerTax().isEmpty() ? legacyRow.getSewerTax() : "0")));
               payment.setSurcharehousetax(BigDecimal.valueOf(Double
-                      .valueOf(legacyRow.getSurchareHouseTax() != null ? legacyRow.getSurchareHouseTax() : "0")));
+                      .valueOf(legacyRow.getSurchareHouseTax() != null  && !legacyRow.getSurchareHouseTax().isEmpty() ? legacyRow.getSurchareHouseTax() : "0")));
               payment.setSurcharewatertax(BigDecimal.valueOf(Double
-                      .valueOf(legacyRow.getSurchareWaterTax() != null ? legacyRow.getSurchareWaterTax() : "0")));
+                      .valueOf(legacyRow.getSurchareWaterTax() != null  && !legacyRow.getSurchareWaterTax().isEmpty() ? legacyRow.getSurchareWaterTax() : "0")));
               payment.setSurcharesewertax(BigDecimal.valueOf(Double
-                      .valueOf(legacyRow.getSurchareSewerTax() != null ? legacyRow.getSurchareSewerTax() : "0")));
+                      .valueOf(legacyRow.getSurchareSewerTax() != null && !legacyRow.getSurchareSewerTax().isEmpty() ? legacyRow.getSurchareSewerTax() : "0")));
               payment.setBillgeneratedtotal(BigDecimal.valueOf(Double
-                      .valueOf(legacyRow.getBillGeneratedTotal() != null ? legacyRow.getBillGeneratedTotal() : "0")));
+                      .valueOf(legacyRow.getBillGeneratedTotal() != null && !legacyRow.getBillGeneratedTotal().isEmpty() ? legacyRow.getBillGeneratedTotal() : "0")));
               payment.setTotalpaidamount(BigDecimal.valueOf(
-                      Double.valueOf(legacyRow.getTotalPaidAmount() != null ? legacyRow.getTotalPaidAmount() : "0")));
+                      Double.valueOf(legacyRow.getTotalPaidAmount() != null && !legacyRow.getTotalPaidAmount().isEmpty() ? legacyRow.getTotalPaidAmount() : "0")));
 
               payment.setLastpaymentdate(legacyRow.getLastPaymentDate());
               propertyPaymentExcelRepository.save(payment);
