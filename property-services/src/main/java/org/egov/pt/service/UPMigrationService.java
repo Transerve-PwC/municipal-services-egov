@@ -188,21 +188,23 @@ public class UPMigrationService {
         excelService.read(excelFile, skip, limit, (RowExcel row) -> {
         	 LegacyRow legacyRow = null;
              
-                 try {
-					legacyRow = legacyExcelRowMapper.map(row);
-					
-					String name = legacyRow.getOwnerName() != null && legacyRow.getOwnerName() != "" ? legacyRow.getOwnerName()
-			                : "Owner of " + legacyRow.getPTIN();
-			        // Invalid name. Only alphabets and special characters -, ',`, .
-			        name = name.replaceAll("[\\$\"'<>?\\\\~`!@#$%^()+={}\\[\\]*,.:;“”‘’]*", "");
-			        name = name.length() > 100 ? name.substring(0, 99) : name;
-					
-					  if(!duplicateMobileNumbers.add(legacyRow.getMobile().trim()+name.trim()))
-					  {
-						  existingUser.put(legacyRow.getMobile().trim()+name.trim(), null);
-					  }
-					  
-				} catch (Exception e) {
+        	 try {
+        		 legacyRow = legacyExcelRowMapper.map(row);
+
+        		 String name = legacyRow.getOwnerName() != null && legacyRow.getOwnerName() != "" ? legacyRow.getOwnerName()
+        				 : "Owner of " + legacyRow.getPTIN();
+        		 // Invalid name. Only alphabets and special characters -, ',`, .
+        		 name = name.replaceAll("[\\$\"'<>?\\\\~`!@#$%^()+={}\\[\\]*,.:;“”‘’]*", "");
+        		 name = name.length() > 100 ? name.substring(0, 99) : name;
+
+        		 if(legacyRow.getMobile()!= null)
+        		 {
+        			 if(!duplicateMobileNumbers.add(legacyRow.getMobile().trim()+name.trim()))
+        			 {
+        				 existingUser.put(legacyRow.getMobile().trim()+name.trim(), null);
+        			 }
+        		 }
+        	 } catch (Exception e) {
 					e.printStackTrace();
 				}
                
@@ -506,10 +508,13 @@ public class UPMigrationService {
 			        name = name.replaceAll("[\\$\"'<>?\\\\~`!@#$%^()+={}\\[\\]*,.:;“”‘’]*", "");
 			        name = name.length() > 100 ? name.substring(0, 99) : name;
 					
+			        if(legacyRow.getMobile()!= null)
+			        {
 					  if(!duplicateMobileNumbers.add(legacyRow.getMobile().trim()+name.trim()))
 					  {
 						  existingUser.put(legacyRow.getMobile().trim()+name.trim(), null);
 					  }
+			        }
 					  
 				} catch (Exception e) {
 					e.printStackTrace();
