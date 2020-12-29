@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import lombok.extern.slf4j.Slf4j;
@@ -199,6 +200,7 @@ public class BoundaryJsonGenerationService {
 
 						if(!zoneIdList.contains(zoneIdFromFile))
 						{
+							wardIdList = new ArrayList<String>();
 							zoneIdList.add(zoneIdFromFile);
 							if(!zoneSameRow)
 							{
@@ -298,8 +300,8 @@ public class BoundaryJsonGenerationService {
 
 						locality.addProperty("id", idIncrementer);
 						locality.addProperty("boundaryNum", 1);
-						locality.addProperty("name", localityDetails.get(0));
-						locality.addProperty("localname", localityDetails.get(0));
+						locality.addProperty("name", localityDetails.get(0).replace("\n", " "));
+						locality.addProperty("localname", localityDetails.get(0).replace("\n", " "));
 						locality.addProperty("label", "Locality");
 						locality.addProperty("area", "Area1");
 						if(cityName.equalsIgnoreCase("bareilly"))
@@ -370,10 +372,10 @@ public class BoundaryJsonGenerationService {
 			egovJson.addProperty("tenantId", tenantId);
 			egovJson.addProperty("moduleName", moduleName);
 			egovJson.add("TenantBoundary", tenantBoundaryArray);
+			
 
 
 			
-
 			log.info("jsonOutput -- {}",egovJson );
 
 
