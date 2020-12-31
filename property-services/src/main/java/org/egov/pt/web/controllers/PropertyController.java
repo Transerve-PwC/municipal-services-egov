@@ -204,4 +204,23 @@ public class PropertyController {
 		return new ResponseEntity<>(jsonOutput, HttpStatus.OK);
 	}
 	
+	@PostMapping("/_createulbcodes")
+	public ResponseEntity<?> createUlbCodesJson(@RequestParam(required = false, defaultValue = "up") String tenantId ,@RequestParam(required = false, defaultValue = "PropertyTax") String moduleName ) throws Exception {
+		long startTime = System.nanoTime();
+		
+		JsonObject categoriesArrayObj = boundaryJson.createULBCodesJson(tenantId, moduleName);
+		String jsonOutput = "" ;
+		if(categoriesArrayObj != null)
+		{
+		Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		jsonOutput = gson.toJson(categoriesArrayObj);
+		}
+		
+		long endtime = System.nanoTime();
+		long elapsetime = endtime - startTime;
+		System.out.println("Elapsed time--->" + elapsetime);
+
+		return new ResponseEntity<>(jsonOutput, HttpStatus.OK);
+	}
+	
 }

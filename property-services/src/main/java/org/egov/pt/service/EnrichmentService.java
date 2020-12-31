@@ -3,6 +3,7 @@ package org.egov.pt.service;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -36,6 +37,11 @@ public class EnrichmentService {
     @Autowired
     private PropertyConfiguration config;
 
+    @Autowired
+    private PropertyIdGenerationService propertyIdService ;
+    
+    @Autowired
+    private Cachebaleservice cachebaleservice ;
 
 
     /**
@@ -166,7 +172,15 @@ public class EnrichmentService {
 			property.setStatus(Status.ACTIVE);
 		}
 		
-		String pId = propertyutil.getIdList(requestInfo, tenantId, config.getPropertyIdGenName(), config.getPropertyIdGenFormat(), 1).get(0);
+		
+		Map<String, String>  wardsMap = cachebaleservice.getWardMap(tenantId, requestInfo);
+        Map<String, String> zonesMap = cachebaleservice.getZoneMap(tenantId, requestInfo);
+
+        String zoneCode = zonesMap.get(request.getProperty().getAddress().getLocality().getCode());
+        String wardCode = wardsMap.get(request.getProperty().getAddress().getLocality().getCode());
+		
+		String pId = propertyIdService.generatePropertyId(tenantId, requestInfo, zoneCode, wardCode, request.getProperty().getUsageCategory());
+	//	String pId = propertyutil.getIdList(requestInfo, tenantId, config.getPropertyIdGenName(), config.getPropertyIdGenFormat(), 1).get(0);
 		String ackNo = propertyutil.getIdList(requestInfo, tenantId, config.getAckIdGenName(), config.getAckIdGenFormat(), 1).get(0);
 		property.setPropertyId(pId);
 		property.setAcknowldgementNumber(ackNo);

@@ -584,5 +584,199 @@ public class BoundaryJsonGenerationService {
 	    return number; 
 	}
 
+	
+	
+	/**
+	 * This uses the excel file to generate the ulb codes json . The headers required in the file are "ULB CODE","ULB NAME","ULB TYPE" in the same order.
+	 * 
+	 * @param tenantId
+	 * @param moduleName
+	 * @return
+	 */
+	public JsonObject createULBCodesJson(String tenantId, String moduleName  )
+	{
+		JsonObject ulbCodeObj = new JsonObject();
+		try {
+			log.info(" tenantId {} moduleName {} ",tenantId,moduleName);
+			String filename = config.getUlbCodesFile();  
+			//The only two headers accepted are given below and they should be in same order , the remaining fields are skipped
+			
+			String[] acceptedHeaders = new String[] {"ULB CODE","ULB NAME","ULB TYPE"};
 
+			LinkedHashMap<String, Integer>  headersMap =  new LinkedHashMap<>();
+			LinkedHashMap<String, Integer>  skipMap =  new LinkedHashMap<>();
+
+			FileInputStream	file = new FileInputStream(new File(filename));
+
+
+			//Create Workbook instance holding reference to .xls file
+			org.apache.poi.ss.usermodel.Workbook workBook = null ;
+			org.apache.poi.ss.usermodel.Sheet sheet = null;
+
+			if(filename.endsWith("xls"))
+			{
+				workBook = new HSSFWorkbook(file);
+
+				if(workBook!= null)
+					sheet = workBook.getSheetAt(0);
+
+			}else
+			{
+				workBook = new XSSFWorkbook(file);
+
+				if(workBook!= null)
+					sheet = workBook.getSheetAt(0);
+			}
+
+			if(sheet == null)
+			{
+				log.error(" Sheet is empty ");
+				return null;
+			}
+
+			//Iterate through each rows one by one
+			Iterator<Row> rowIterator = sheet.iterator();
+
+			JsonArray ulbCodesArray =  new JsonArray();
+
+
+			int idIncrementer = 1 ;
+			int categoryIncrementer = 1 ;
+			boolean headerRow = false ;
+			String[] headersArray = Arrays.stream(acceptedHeaders).map(e -> e.toLowerCase().replaceAll("\\s", "")).toArray(String[]::new);
+			List<String> headersList = Arrays.asList(headersArray);  
+			
+
+			row : while (rowIterator.hasNext()) 
+			{
+
+				Row row = rowIterator.next();
+				ArrayList<String> ulbDetails = new ArrayList<String>(); 
+
+				//For each row, iterate through all the columns
+				Iterator<Cell> cellIterator = row.cellIterator();
+				int cellNumber = 0 ;
+				headerRow = false ;
+
+				column : while (cellIterator.hasNext()) 
+				{
+
+					Cell cell = cellIterator.next();
+
+					if(skipMap.containsValue(cellNumber))
+					{
+						cellNumber++;
+						continue ;
+					}
+
+
+					//check the header details
+					if(cell.getCellType() == CellType.STRING)
+					{
+						String header = cell.getStringCellValue().replaceAll("\\s", "")+"" ;
+						if(header.equalsIgnoreCase("ULBCODE") )
+						{
+							headersMap.put(header, cellNumber);
+							headerRow = true ;
+							System.out.println(" header found ");
+
+						}
+
+					}
+
+					if(headerRow)
+					{
+						if(cell.getCellType() == CellType.STRING)
+						{
+							String header = cell.getStringCellValue().replaceAll("\\s", "")+"" ;
+							headersMap.putIfAbsent(header, cellNumber);
+
+							if(  !headersList.contains(header.toLowerCase()))
+							{
+								skipMap.put(header, cellNumber);
+							}
+
+						}
+						cellNumber++;
+						continue column ;
+					}
+
+					if(headersMap.isEmpty())
+					{
+						continue row;
+					}
+
+					//Checks the locality details
+					if( !skipMap.containsValue(cellNumber) )
+					{
+						String ulbDetailsFromFile = "" ;
+						switch (cell.getCellType()) 
+						{
+						case NUMERIC:
+							ulbDetailsFromFile = cell.getNumericCellValue()+"" ;
+							ulbDetailsFromFile = getNumber(ulbDetailsFromFile);
+							break;
+						case STRING:
+							ulbDetailsFromFile = cell.getStringCellValue()+"" ;
+							break;
+						}
+
+						ulbDetails.add(ulbDetailsFromFile);
+
+					}
+
+					cellNumber++;
+
+					//Start preparing locality Object
+					if(!cellIterator.hasNext())
+					{
+						if(ulbDetails.get(1).length()>1)
+						{
+							JsonObject ulbObj  = new JsonObject();
+							
+							String zeroPadded = String.format("%03d" , Integer.parseInt(ulbDetails.get(0).toString()));
+							
+							ulbObj.addProperty("id", idIncrementer);
+							ulbObj.addProperty("code", zeroPadded );
+							ulbObj.addProperty("name", ulbDetails.get(1));
+							ulbObj.addProperty("type", ulbDetails.get(2));
+							ulbObj.addProperty("label", "ULB");
+							
+							idIncrementer++;
+							categoryIncrementer++;
+							ulbCodesArray.add(ulbObj);
+
+						}
+					}
+
+
+
+				}
+			}
+			file.close();
+			workBook.close();
+
+			
+			ulbCodeObj.addProperty("tenantId", tenantId);
+			ulbCodeObj.addProperty("moduleName", moduleName);
+			ulbCodeObj.add("UlbDetails", ulbCodesArray);
+
+			
+			log.info("jsonOutput -- {}",ulbCodeObj );
+
+
+
+		} catch (FileNotFoundException e) {
+			log.error(" error while creating json file is not found {}",e);
+			return null ;
+		} catch (IOException e) {
+			log.error(" error while creating json {}",e);
+			return null ;
+		}
+
+
+		return ulbCodeObj ;
+	}
+
+	
 }
