@@ -2,7 +2,6 @@ package org.egov.pt.service;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -41,6 +40,10 @@ public class Cachebaleservice {
 	
 	 private static final String TENANTS_MORADABAD = "up.moradabad";
 	 private static final String TENANTS_BAREILLY = "up.bareilly";
+	 private static final String TENANTS_ALIGARH = "up.aligarh";
+	 private static final String TENANTS_SAHARANPUR = "up.saharanpur";
+	 private static final String TENANT_ID = "up";
+	 
 
 	
 	 @Cacheable(value="localities" ,key ="#tenantId" ,sync = true)
@@ -75,10 +78,34 @@ public class Cachebaleservice {
 	        return null;
 	    }
 	 
+	 @Cacheable(value="ulbs" ,key ="#tenantId" ,sync = true)
+	    public Map<String, String> getUlbMap(String tenantId, org.egov.common.contract.request.RequestInfo requestinfo) {
+	    	
+	        if (TENANT_ID.equalsIgnoreCase(tenantId)) {
+	            StringBuilder uri = new StringBuilder(config.getMdmsHost()).append(config.getMdmsEndpoint());
+	            MdmsCriteriaReq criteriaReq = prepareMdMsRequest(tenantId, "PropertyTax",
+	                    Arrays.asList(new String[] { "UlbDetails" }), "$..[?(@.label=='ULB')]", requestinfo);
+	            Optional<Object> response = restRepo.fetchResult(uri, criteriaReq);
+	            List<Map<String, String>> boundaries = JsonPath.read(response.get(),"$.MdmsRes.PropertyTax.UlbDetails");
+	            
+	            Map<String, String> ulbMap = boundaries.stream().collect(Collectors.toMap(b -> b.get("name") , b -> b.get("code"),(oldval,newval) -> newval));
+	            
+	           log.info("ulbMap  {} ",ulbMap);
+	            
+	            return ((HashMap<String, String>) ulbMap).entrySet().parallelStream().collect(Collectors.toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue));
+	           
+	         
+
+	        }
+	        return null;
+	    }
+	 
+	 
+	 
+	 
 	 @Cacheable(value="ward" ,key ="#tenantId" ,sync = true)
 	    public Map<String, String> getWardMap(String tenantId, org.egov.common.contract.request.RequestInfo requestinfo) {
-	     
-	    	if (TENANTS_MORADABAD.equalsIgnoreCase(tenantId) || TENANTS_BAREILLY.equalsIgnoreCase(tenantId)) {
+	    	if (TENANTS_MORADABAD.equalsIgnoreCase(tenantId) || TENANTS_BAREILLY.equalsIgnoreCase(tenantId) || TENANTS_ALIGARH.equalsIgnoreCase(tenantId) || TENANTS_SAHARANPUR.equalsIgnoreCase(tenantId) ) {
 	            try {
 					StringBuilder uri = new StringBuilder(config.getMdmsHost()).append(config.getMdmsEndpoint());
 					MdmsCriteriaReq criteriaReq = prepareMdMsRequest(tenantId, "egov-location",
@@ -88,14 +115,14 @@ public class Cachebaleservice {
 					
 					HashMap<String, String> wardsMap  = new HashMap<String, String>();
 					
-					for (Map<String, ArrayList<Map<Object, Object>>> zoneMap : boundaries) {
+					for (Map<String, ArrayList<Map<Object, Object>>> wardMap : boundaries) {
 						
-						ArrayList<Map<Object, Object>> childrenList = (ArrayList<Map<Object, Object>>)zoneMap.get("children");
+						ArrayList<Map<Object, Object>> childrenList = (ArrayList<Map<Object, Object>>)wardMap.get("children");
 						
-						System.out.println(zoneMap.get("code"));
+						System.out.println(wardMap.get("code"));
 						
 						for (Map<Object, Object> localityMap : childrenList) {
-							wardsMap.put(localityMap.get("code").toString(), String.valueOf(zoneMap.get("code")));
+							wardsMap.put(localityMap.get("code").toString(), String.valueOf(wardMap.get("code")));
 						}
 						
 					}
@@ -114,10 +141,45 @@ public class Cachebaleservice {
 	        return null;
 	    }
 	 
+	 
+	 @Cacheable(value="wardNames" ,key ="#tenantId" ,sync = true)
+	    public Map<String, String> getWardNameMap(String tenantId, org.egov.common.contract.request.RequestInfo requestinfo) {
+	     
+	    	if (TENANTS_MORADABAD.equalsIgnoreCase(tenantId) || TENANTS_BAREILLY.equalsIgnoreCase(tenantId) || TENANTS_ALIGARH.equalsIgnoreCase(tenantId) || TENANTS_SAHARANPUR.equalsIgnoreCase(tenantId) ) {
+	            try {
+					StringBuilder uri = new StringBuilder(config.getMdmsHost()).append(config.getMdmsEndpoint());
+					MdmsCriteriaReq criteriaReq = prepareMdMsRequest(tenantId, "egov-location",
+					        Arrays.asList(new String[] { "TenantBoundary" }), "$..[?(@.label=='Ward')]", requestinfo);
+					Optional<Object> response = restRepo.fetchResult(uri, criteriaReq);
+					List<Map<String, String>> boundaries = JsonPath.read(response.get(),"$.MdmsRes.egov-location.TenantBoundary");
+					
+					HashMap<String, String> wardsNameMap  = new HashMap<String, String>();
+					
+					for (Map<String, String> wardMap : boundaries) {
+						
+						String wardName = String.valueOf(wardMap.get("name"));
+						String zeroPaddedWard = new String(String.format("%03d" , Integer.parseInt(wardName)));
+							wardsNameMap.put(wardMap.get("code").toString(), zeroPaddedWard);
+					}
+					
+					log.info(" wardsNameMap size {}  ",wardsNameMap);
+					
+					return  wardsNameMap;
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+	        }
+	        
+	        return null;
+	    }
+	 
+	 
+	 
+	 
 	 @Cacheable(value="zone" ,key ="#tenantId" ,sync = true)
 	    public Map<String, String> getZoneMap(String tenantId, org.egov.common.contract.request.RequestInfo requestinfo) {
 	     
-	    	if (TENANTS_MORADABAD.equalsIgnoreCase(tenantId) || TENANTS_BAREILLY.equalsIgnoreCase(tenantId)) {
+	    	if (TENANTS_MORADABAD.equalsIgnoreCase(tenantId) || TENANTS_BAREILLY.equalsIgnoreCase(tenantId) || TENANTS_ALIGARH.equalsIgnoreCase(tenantId) || TENANTS_SAHARANPUR.equalsIgnoreCase(tenantId) ) {
 	            try {
 					StringBuilder uri = new StringBuilder(config.getMdmsHost()).append(config.getMdmsEndpoint());
 					MdmsCriteriaReq criteriaReq = prepareMdMsRequest(tenantId, "egov-location",
@@ -134,8 +196,8 @@ public class Cachebaleservice {
 						for (Map<String, ArrayList<Map<Object, Object>>> wards : zoneMap.get("children")) {
 							
 							ArrayList<Map<Object, Object>> childrenList = (ArrayList<Map<Object, Object>>)wards.get("children");
+					
 							
-							System.out.println(zoneMap.get("code"));
 							
 							for (Map<Object, Object> localityMap : childrenList) {
 								zonesMap.put(localityMap.get("code").toString(), String.valueOf(zoneMap.get("code")));
@@ -154,6 +216,45 @@ public class Cachebaleservice {
 	        }
 	        return null;
 	    }
+	 
+	 @Cacheable(value="zoneNames" ,key ="#tenantId" ,sync = true)
+	    public Map<String, String> getZoneNamesMap(String tenantId, org.egov.common.contract.request.RequestInfo requestinfo) {
+	     
+	    	if (TENANTS_MORADABAD.equalsIgnoreCase(tenantId) || TENANTS_BAREILLY.equalsIgnoreCase(tenantId)|| TENANTS_ALIGARH.equalsIgnoreCase(tenantId)|| TENANTS_SAHARANPUR.equalsIgnoreCase(tenantId)) {
+	            try {
+					StringBuilder uri = new StringBuilder(config.getMdmsHost()).append(config.getMdmsEndpoint());
+					MdmsCriteriaReq criteriaReq = prepareMdMsRequest(tenantId, "egov-location",
+					        Arrays.asList(new String[] { "TenantBoundary" }), "$..[?(@.label=='Zone')]", requestinfo);
+					Optional<Object> response = restRepo.fetchResult(uri, criteriaReq);
+					List<Map<String, String>> boundaries = JsonPath.read(response.get(),"$.MdmsRes.egov-location.TenantBoundary");
+					
+					HashMap<String, String> zoneNamesMap  = new HashMap<String, String>();
+					
+					for (Map<String, String> zoneMap : boundaries) {
+						
+							String zoneName = String.valueOf(zoneMap.get("name")).toLowerCase().replace("zone", "").replace("-", "").trim();
+							
+							String zeroPaddedZone = new String(String.format("%02d" , Integer.parseInt(zoneName)));
+						
+								zoneNamesMap.put(zoneMap.get("code").toString(), zeroPaddedZone );
+					}
+					
+					log.info(" zoneNamesMap size {}  ",zoneNamesMap);
+					
+					
+					return  zoneNamesMap;
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+	           
+	        }
+	        return null;
+	    }
+	 
+	 
+	 
+	 
+	 
 	 
 	 
 	 @Cacheable(value="duplicateLocalities" ,key ="#tenantId" ,sync = true)

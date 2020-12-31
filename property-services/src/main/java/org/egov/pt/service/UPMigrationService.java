@@ -84,7 +84,8 @@ public class UPMigrationService {
     @Autowired
     private Cachebaleservice cachebaleservice ;
 
-    
+    @Autowired
+    private PropertyIdGenerationService propertyIdSerivce ;
 
    
     
@@ -262,16 +263,25 @@ public class UPMigrationService {
               	  }            	  
               	  
                 }
+                
+                Map<String, String>  wardsMap = cachebaleservice.getWardMap(tenantId, requestinfo);
+                Map<String, String> zonesMap = cachebaleservice.getZoneMap(tenantId, requestinfo);
 
+                String zoneCode = zonesMap.get(localityCode);
+                String wardCode = wardsMap.get(localityCode);
+                
                 // Generate unique property id and acknowledgement no
-                String pId = propertyutil.getIdList(requestinfo, tenantId, config.getPropertyIdGenName(),
-                        config.getPropertyIdGenFormat(), 1).get(0);
+//                String pId = propertyutil.getIdList(requestinfo, tenantId, config.getPropertyIdGenName(),
+//                        config.getPropertyIdGenFormat(), 1).get(0);
+                
+                
+                
                 String ackNo = propertyutil
                         .getIdList(requestinfo, tenantId, config.getAckIdGenName(), config.getAckIdGenFormat(), 1)
                         .get(0);
               
                 property.setId(UUID.randomUUID().toString());
-                property.setPropertyid(pId);
+               
                 property.setTenantid(tenantId);
                 property.setAccountid(user.getUuid());
                 property.setStatus(config.getWfStatusActive());
@@ -294,6 +304,11 @@ public class UPMigrationService {
                 property.setLastmodifiedby(user.getUuid());
                 property.setCreatedtime(new Date().getTime());
                 property.setLastmodifiedtime(new Date().getTime());
+                
+                String pId = propertyIdSerivce.generatePropertyId(tenantId, requestinfo, zoneCode, wardCode, property.getUsagecategory());
+                
+                property.setPropertyid(pId);
+                
                 propertyExcelRepository.save(property);
                 failedCode = 1;
 
@@ -371,17 +386,15 @@ public class UPMigrationService {
                 address.setLastmodifiedtime(new Date().getTime());
                 address.setTaxward(legacyRow.getTaxWard());
                 address.setWardname(legacyRow.getWardName());
-                Map<String, String>  wardsMap = cachebaleservice.getWardMap(tenantId, requestinfo);
-                Map<String, String> zonesMap = cachebaleservice.getZoneMap(tenantId, requestinfo);
                
-                String zoneCode = zonesMap.get(localityCode);
-                String wardCode = wardsMap.get(localityCode);
+               
+                
                 
                 if (zoneCode == null) {
                     log.warn("Empty zones code for the property {}", legacyRow.getLocality());
                 }
                 
-                if (wardsMap == null) {
+                if (wardCode == null) {
                     log.warn("Empty wards code for the property {}", legacyRow.getLocality());
                 }
                 
@@ -579,16 +592,23 @@ public class UPMigrationService {
             	  }            	  
             	  
               }
-
+              
+              Map<String, String>  wardsMap = cachebaleservice.getWardMap(tenantId, requestinfo);
+              Map<String, String> zonesMap = cachebaleservice.getZoneMap(tenantId, requestinfo);
+              
+             
+              
+              String zoneCode = zonesMap.get(localityCode);
+              String wardCode = wardsMap.get(localityCode);
               // Generate unique property id and acknowledgement no
-              String pId = propertyutil.getIdList(requestinfo, tenantId, config.getPropertyIdGenName(),
-                      config.getPropertyIdGenFormat(), 1).get(0);
+//              String pId = propertyutil.getIdList(requestinfo, tenantId, config.getPropertyIdGenName(),
+//                      config.getPropertyIdGenFormat(), 1).get(0);
               String ackNo = propertyutil
                       .getIdList(requestinfo, tenantId, config.getAckIdGenName(), config.getAckIdGenFormat(), 1)
                       .get(0);
             
               property.setId(UUID.randomUUID().toString());
-              property.setPropertyid(pId);
+             
               property.setTenantid(tenantId);
               property.setAccountid(user.getUuid());
               property.setStatus(config.getWfStatusActive());
@@ -611,6 +631,11 @@ public class UPMigrationService {
               property.setLastmodifiedby(user.getUuid());
               property.setCreatedtime(new Date().getTime());
               property.setLastmodifiedtime(new Date().getTime());
+              
+              String pId = propertyIdSerivce.generatePropertyId(tenantId, requestinfo, zoneCode, wardCode, property.getUsagecategory());
+              
+              property.setPropertyid(pId);
+              
               propertyExcelRepository.save(property);
               failedCode = 1;
 
@@ -689,19 +714,13 @@ public class UPMigrationService {
               address.setTaxward(legacyRow.getTaxWard());
               address.setWardname(legacyRow.getWardName());
               
-              Map<String, String>  wardsMap = cachebaleservice.getWardMap(tenantId, requestinfo);
-              Map<String, String> zonesMap = cachebaleservice.getZoneMap(tenantId, requestinfo);
-              
-             
-              
-              String zoneCode = zonesMap.get(localityCode);
-              String wardCode = wardsMap.get(localityCode);
+            
               
               if (zoneCode == null) {
                   log.warn("Empty zones code for the property {}", legacyRow.getLocality());
               }
               
-              if (wardsMap == null) {
+              if (wardCode == null) {
                   log.warn("Empty wards code for the property {}", legacyRow.getLocality());
               }
               

@@ -332,5 +332,10 @@ public class PropertyConfiguration {
     private String categoriesFile ;
     
     
+    @Value("${egov.ulb.codes.filename}")
+    private String ulbCodesFile ;
+    
+    @Value("${egov.state.code}")
+    private String stateCode ;
     
 }
