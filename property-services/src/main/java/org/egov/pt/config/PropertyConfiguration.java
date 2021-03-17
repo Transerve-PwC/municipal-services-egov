@@ -331,6 +331,21 @@ public class PropertyConfiguration {
     @Value("${egov.categories.filename}")
     private String categoriesFile ;
     
-    
-    
+    @Value("${niveshMitra.user.name}")
+    private String niveshMitraUser;
+
+    @Value("${niveshMitra.user.tenantid}")
+    private String niveshMitraTenant;
+
+    @Value("${niveshMitra.user.userType}")
+    private String niveshMitraUserType;
+ 
+
+    @Value("${niveshMitra.oauth.context.path}")
+    private String niveshMitraUserContext;
+    @Value("${niveshMitra.oauth.token.endpoint}")
+    private String niveshMitraUserEndpoint;
+ 
+    @Value("${egov.calculation.estimate.path}")
+    private String estimatationCalculateEndpoint;
 }

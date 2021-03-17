@@ -2,7 +2,9 @@ package org.egov.pt.util;
 
 import static java.util.Objects.isNull;
 
+import java.time.MonthDay;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -35,7 +37,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.JsonPath;
 
 import lombok.Getter;
-
+import lombok.extern.slf4j.Slf4j;
+@Slf4j
 @Getter
 public class CommonUtils {
 
@@ -49,7 +52,8 @@ public class CommonUtils {
     @Autowired
     private ServiceRequestRepository restRepo;
 
-  
+	private static final MonthDay FINANCIAL_START = MonthDay.of(4, 1);
+	private static final MonthDay FINANCIAL_END = MonthDay.of(3, 31);
     /**
      * Method to return auditDetails for create/update flows
      *
@@ -198,5 +202,14 @@ public class CommonUtils {
             return false;
         return true;
     }
-	
+	public static String currentFinancialYear() {
+	int year = Calendar.getInstance().get(Calendar.YEAR);
+    int month = Calendar.getInstance().get(Calendar.MONTH) + 1;
+	String financialYear = month < 3? (year - 1) + "-" + year : year + "-" + (year + 1);
+     log.info("Financial year : " + financialYear);
+	 return financialYear;
+	}
+	public static void getCurrentFiscalStartDate() {
+
+	}
 }

@@ -2,11 +2,14 @@ package org.egov.pt.service;
 
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.pt.config.PropertyConfiguration;
 import org.egov.pt.models.Property;
 import org.egov.pt.repository.ServiceRequestRepository;
 import org.egov.pt.web.contracts.AssessmentRequest;
+import org.egov.pt.web.contracts.CalculationRes;
 import org.egov.pt.web.contracts.PropertyRequest;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +27,8 @@ public class CalculationService {
     @Autowired
     private TranslationService translationService;
 
+    @Autowired
+    private ObjectMapper mapper;
 
      public void calculateTax(AssessmentRequest assessmentRequest, Property property){
     	 
@@ -58,6 +63,19 @@ public class CalculationService {
  		serviceRequestRepository.fetchResult(url, propertyRequest);
  	}
 
+     public CalculationRes getEstimate(AssessmentRequest assessmentReq) {
+        // estimatationCalculateEndpoint
+        StringBuilder uri = new StringBuilder(config.getCalculationHost())
+        .append(config.getCalculationContextPath())
+        .append(config.getEstimatationCalculateEndpoint());
+
+        Object response = serviceRequestRepository.fetchResult(uri, assessmentReq);
+        if (response != null) {
+            CalculationRes calResponse = mapper.convertValue(response, CalculationRes.class);
+            return calResponse;
+        } 
+        return null;
+     }
 //     private CalculationReq createCalculationReq(PropertyRequest request){
 //         CalculationReq calculationReq = new CalculationReq();
 //         calculationReq.setRequestInfo(request.getRequestInfo());
