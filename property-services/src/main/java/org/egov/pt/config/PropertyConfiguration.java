@@ -348,4 +348,9 @@ public class PropertyConfiguration {
  
     @Value("${egov.calculation.estimate.path}")
     private String estimatationCalculateEndpoint;
+    
+    
+    @Value("${egov.calculation.estimate.host}")
+    private String estimatationHost;
+    
 }

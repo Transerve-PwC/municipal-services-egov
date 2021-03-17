@@ -1,6 +1,8 @@
 package org.egov.pt.service;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -65,15 +67,20 @@ public class CalculationService {
 
      public CalculationRes getEstimate(AssessmentRequest assessmentReq) {
         // estimatationCalculateEndpoint
-        StringBuilder uri = new StringBuilder(config.getCalculationHost())
+        StringBuilder uri = new StringBuilder(config.getEstimatationHost())
         .append(config.getCalculationContextPath())
         .append(config.getEstimatationCalculateEndpoint());
 
-        Object response = serviceRequestRepository.fetchResult(uri, assessmentReq);
-        if (response != null) {
-            CalculationRes calResponse = mapper.convertValue(response, CalculationRes.class);
+        Optional<Object> response = serviceRequestRepository.fetchResult(uri, assessmentReq);
+        
+    	
+    	if(response.isPresent()) {
+    		LinkedHashMap<String, Object> responseMap = (LinkedHashMap<String, Object>)response.get();
+    		CalculationRes calResponse = mapper.convertValue(responseMap, CalculationRes.class);
             return calResponse;
-        } 
+    	}
+        
+       
         return null;
      }
 //     private CalculationReq createCalculationReq(PropertyRequest request){

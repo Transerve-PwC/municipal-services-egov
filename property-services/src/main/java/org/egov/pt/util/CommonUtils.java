@@ -205,7 +205,7 @@ public class CommonUtils {
 	public static String currentFinancialYear() {
 	int year = Calendar.getInstance().get(Calendar.YEAR);
     int month = Calendar.getInstance().get(Calendar.MONTH) + 1;
-	String financialYear = month < 3? (year - 1) + "-" + year : year + "-" + (year + 1);
+	String financialYear = month <= 3? (year - 1) + "-" + (year+"").substring(2, 4) : year + "-" + ((year + 1)+"").substring(2, 4);
      log.info("Financial year : " + financialYear);
 	 return financialYear;
 	}

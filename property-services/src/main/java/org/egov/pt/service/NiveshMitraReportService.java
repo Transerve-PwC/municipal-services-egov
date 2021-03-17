@@ -35,6 +35,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
@@ -87,7 +88,7 @@ public class NiveshMitraReportService {
 	 */
 
 	
-	public List<Property> searchProperty(PropertyCriteria criteria) {
+	public List<Property> searchProperty(PropertyCriteria criteria ,RequestInfo requestInfo) {
 
 		List<Property> properties;
 
@@ -95,12 +96,12 @@ public class NiveshMitraReportService {
 		 * throw error if audit request is with no proeprty id or multiple propertyids
 		 */
 		if (CollectionUtils.isEmpty(criteria.getPropertyIds())
-				|| (!CollectionUtils.isEmpty(criteria.getPropertyIds()) && criteria.getPropertyIds().size() > 1))) {
+				|| (!CollectionUtils.isEmpty(criteria.getPropertyIds()) && criteria.getPropertyIds().size() > 1)) {
 
 			throw new CustomException("EG_PT_PROPERTY_ERROR",
 					"PropertyID not set");
 		}
-		properties = repository.getPropertiesWithOwnerInfo(criteria, null, true);
+		properties = repository.getPropertiesWithOwnerInfo(criteria, requestInfo, true);
 
 		List<Property> propertiesWithBoundaries = new ArrayList<Property>();
 		properties.forEach(property -> {
