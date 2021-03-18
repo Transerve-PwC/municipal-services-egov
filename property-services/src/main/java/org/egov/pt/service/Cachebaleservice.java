@@ -42,6 +42,19 @@ public class Cachebaleservice {
 	 private static final String TENANTS_MORADABAD = "up.moradabad";
 	 private static final String TENANTS_BAREILLY = "up.bareilly";
 
+	 @Cacheable(value="finYearRange", key="#financeRange", sync = true)
+	  public Map<String, String> getFinancialYearData(String financeRange, org.egov.common.contract.request.RequestInfo requestinfo){
+			StringBuilder uri = new StringBuilder(config.getMdmsHost()).append(config.getMdmsEndpoint());
+	        MdmsCriteriaReq criteriaReq = prepareMdMsRequest("up", "egf-master", Arrays.asList(new String[] { "FinancialYear" }), "$[?(@.module=='PT')]", requestinfo);
+	            Optional<Object> response = restRepo.fetchResult(uri, criteriaReq);
+	            List<Map<String, String>> financialYears = JsonPath.read(response.get(),"$.MdmsRes.egf-master.FinancialYear");
+	            
+	           List<Map<String, String>> data = financialYears.stream().filter(obj -> obj.get("code").toString().equalsIgnoreCase(financeRange)).collect(Collectors.toList());
+				if (data != null && data.size() > 0) {
+					return data.get(0);
+				}
+				return null;
+	  }
 	
 	 @Cacheable(value="localities" ,key ="#tenantId" ,sync = true)
 	    public Map<String, String> getLocalityMap(String tenantId, org.egov.common.contract.request.RequestInfo requestinfo) {

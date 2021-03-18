@@ -206,14 +206,8 @@ public class CommonUtils {
 	int year = Calendar.getInstance().get(Calendar.YEAR);
     int month = Calendar.getInstance().get(Calendar.MONTH) + 1;
 	String financialYear = month <= 3? (year - 1) + "-" + (year+"").substring(2, 4) : year + "-" + ((year + 1)+"").substring(2, 4);
-     log.info("Financial year : " + financialYear);
+    //  log.info("Financial year : " + financialYear);
 	 return financialYear;
-	}
-	public static void getCurrentFiscalStartDateEpoch() {
-
-	}
-	public static void getCurrentFiscalEndDateEpoch() {
-
 	}
 	public static String getULBCodeForTenantId (String tenandId) {
 
@@ -231,4 +225,15 @@ public class CommonUtils {
 		}
 		return "";
 	}
+	public static int stringToInt(String param) {
+		try {
+			return Integer.valueOf(param);
+		} catch(NumberFormatException e) {
+		   return 0;
+		}
+	}
+	public static double stringToDouble(String value) {
+		return value == null || value.isEmpty() || value == "null" ? 0 : Double.parseDouble(value);
+	}
+
 }
