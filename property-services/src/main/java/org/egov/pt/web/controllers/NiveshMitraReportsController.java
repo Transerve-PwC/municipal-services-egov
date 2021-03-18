@@ -1,60 +1,40 @@
 package org.egov.pt.web.controllers;
 
-import java.io.InputStream;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
-import javax.validation.Valid;
-
 import org.egov.common.contract.request.RequestInfo;
-import org.egov.common.contract.response.ResponseInfo;
-import org.egov.pt.config.PropertyConfiguration;
 import org.egov.pt.models.Assessment;
 import org.egov.pt.models.Property;
 import org.egov.pt.models.PropertyCriteria;
 import org.egov.pt.models.Assessment.Source;
 import org.egov.pt.models.enums.Channel;
-import org.egov.pt.models.oldProperty.OldPropertyCriteria;
-import org.egov.pt.models.oldProperty.PropertyDetail.ChannelEnum;
-import org.egov.pt.service.BoundaryJsonGenerationService;
-import org.egov.pt.service.Cachebaleservice;
+import org.egov.pt.repository.NiveshMitraReportsRepository;
 import org.egov.pt.service.CalculationService;
-import org.egov.pt.service.MigrationService;
 import org.egov.pt.service.NiveshMitraReportService;
-import org.egov.pt.service.PropertyService;
-import org.egov.pt.service.UPMigrationService;
 import org.egov.pt.util.CommonUtils;
-import org.egov.pt.util.ResponseInfoFactory;
-import org.egov.pt.validator.PropertyValidator;
 import org.egov.pt.web.contracts.AssessmentRequest;
 import org.egov.pt.web.contracts.CalculationRes;
 import org.egov.pt.web.contracts.NiveshMitraMutationResponse;
-import org.egov.pt.web.contracts.PropertyRequest;
-import org.egov.pt.web.contracts.PropertyResponse;
-import org.egov.pt.web.contracts.RequestInfoWrapper;
+import org.egov.pt.web.contracts.NiveshMitraTaxResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
+import lombok.extern.slf4j.Slf4j;
 
+
+@Slf4j
 @Controller
 @RequestMapping("/property-reports")
 public class NiveshMitraReportsController {
@@ -67,7 +47,8 @@ public class NiveshMitraReportsController {
 	@Autowired
 	private CalculationService calculationService;
 	
-	
+	@Autowired
+	private NiveshMitraReportsRepository repository;
 
 
 	@GetMapping("/mutationCheck")
@@ -121,6 +102,34 @@ public class NiveshMitraReportsController {
 		return new ResponseEntity<>(resp, HttpStatus.OK);
 	}
 
-	
-	
+	@GetMapping("/houseTaxData")
+	public ResponseEntity<?> houseTaxData() {
+
+		NiveshMitraTaxResponse[] taxCollectionRespArray;
+		List <Map<String,Object>> resp = repository.getHouseTaxData();
+		log.info("Got Response from db", resp);
+		Iterator<Map<String, Object>> iterator = resp.iterator();
+		while(iterator.hasNext()) {
+			Map<String, Object> houseTaxObj = iterator.next();
+			log.info("Response for tenant house tax", houseTaxObj);
+		}
+		return new ResponseEntity<>(null, HttpStatus.OK);
+	}
+	@GetMapping("/waterTaxData")
+	public ResponseEntity<?> waterTaxData() {
+
+		NiveshMitraTaxResponse[] taxCollectionRespArray;
+		
+
+		return new ResponseEntity<>(null, HttpStatus.OK);
+	}
+	@GetMapping("/ptCountDemand")
+	public ResponseEntity<?> ptCountDemand() {
+
+		NiveshMitraTaxResponse[] taxCollectionRespArray;
+		
+
+		return new ResponseEntity<>(null, HttpStatus.OK);
+	}
+
 }

@@ -1,33 +1,14 @@
 package org.egov.pt.service;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Sets;
-
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.pt.config.PropertyConfiguration;
-import org.egov.pt.models.OwnerInfo;
 import org.egov.pt.models.Property;
 import org.egov.pt.models.PropertyCriteria;
-import org.egov.pt.models.enums.CreationReason;
-import org.egov.pt.models.enums.Status;
-import org.egov.pt.models.user.UserDetailResponse;
-import org.egov.pt.models.user.UserSearchRequest;
-import org.egov.pt.models.workflow.State;
-import org.egov.pt.producer.Producer;
 import org.egov.pt.repository.PropertyRepository;
-import org.egov.pt.util.PTConstants;
-import org.egov.pt.util.PropertyUtil;
-import org.egov.pt.validator.PropertyValidator;
-import org.egov.pt.web.contracts.PropertyRequest;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
@@ -37,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import lombok.extern.slf4j.Slf4j;
@@ -49,8 +29,6 @@ public class NiveshMitraReportService {
 	@Autowired
     private RestTemplate restTemplate;
 	
-	@Autowired
-	private Producer producer;
 
 	@Autowired
 	private PropertyConfiguration config;
@@ -61,23 +39,6 @@ public class NiveshMitraReportService {
 	@Autowired
 	private EnrichmentService enrichmentService;
 
-	@Autowired
-	private PropertyValidator propertyValidator;
-
-	@Autowired
-	private UserService userService;
-
-	@Autowired
-	private WorkflowService wfService;
-
-	@Autowired
-	private PropertyUtil util;
-
-	@Autowired
-	private ObjectMapper mapper;
-
-	@Autowired
-	private CalculationService calculatorService;
 
 
 	/**
