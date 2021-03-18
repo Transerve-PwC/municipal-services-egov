@@ -209,7 +209,26 @@ public class CommonUtils {
      log.info("Financial year : " + financialYear);
 	 return financialYear;
 	}
-	public static void getCurrentFiscalStartDate() {
+	public static void getCurrentFiscalStartDateEpoch() {
 
+	}
+	public static void getCurrentFiscalEndDateEpoch() {
+
+	}
+	public static String getULBCodeForTenantId (String tenandId) {
+
+		if (tenandId != null) {
+			switch(tenandId) {
+				case "up.bareilly":
+				 return "137";
+				case "up.moradabad":
+				 return "114";
+				case "up.saharanpur":
+				 return "001";
+				default:
+				  return "";
+			}
+		}
+		return "";
 	}
 }

@@ -1,9 +1,14 @@
 package org.egov.pt.web.contracts;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.TimeZone;
 
 import org.egov.common.contract.response.ResponseInfo;
 import org.egov.pt.models.Property;
+import org.egov.pt.util.CommonUtils;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -26,8 +31,7 @@ import lombok.ToString;
 @Builder
 public class NiveshMitraTaxResponse {
 
-	@JsonProperty("ResponseInfo")
-  private ResponseInfo responseInfo;
+
   @JsonProperty("asOnDateTime")
   private String asOnDateTimeStr;
   @JsonProperty("amountinRupees")
@@ -36,6 +40,22 @@ public class NiveshMitraTaxResponse {
   private String transactionCount;
   @JsonProperty("financialYear")
   private String financialYear;
-  @JsonProperty("uibcode")
-  private String uibcode;
+  @JsonProperty("ulbcode")
+  private String ulbcode;
+
+  public static NiveshMitraTaxResponse taxRespObjFromHashMap(HashMap<String, String> houseTaxObj) {
+    NiveshMitraTaxResponse taxResp = new NiveshMitraTaxResponse();
+    Date date = new Date();
+		TimeZone timezone = TimeZone.getTimeZone("Asia/Kolkata");
+		SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+		formatter.setTimeZone(timezone);
+		String asOnDate = formatter.format(date);
+    
+    taxResp.setAsOnDateTimeStr(asOnDate);
+    taxResp.setFinancialYear(CommonUtils.currentFinancialYear());
+    taxResp.setAmountinRupees(houseTaxObj.get("amount"));
+    taxResp.setTransactionCount(houseTaxObj.get("count"));
+    taxResp.setUlbcode(CommonUtils.getULBCodeForTenantId(houseTaxObj.get("tenantid")));
+    return taxResp;
+  }
 }

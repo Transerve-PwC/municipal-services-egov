@@ -1,12 +1,12 @@
 package org.egov.pt.web.controllers;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.TimeZone;
 
 import org.egov.common.contract.request.RequestInfo;
@@ -31,41 +31,33 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import lombok.extern.slf4j.Slf4j;
-
-
-@Slf4j
 @Controller
 @RequestMapping("/property-reports")
 public class NiveshMitraReportsController {
 
-
 	@Autowired
 	private NiveshMitraReportService reportService;
 
-
 	@Autowired
 	private CalculationService calculationService;
-	
+
 	@Autowired
 	private NiveshMitraReportsRepository repository;
 
-
 	@GetMapping("/mutationCheck")
-	public ResponseEntity<NiveshMitraMutationResponse> mutationCheck(@RequestParam(required = true) String propertyID ) {
+	public ResponseEntity<NiveshMitraMutationResponse> mutationCheck(@RequestParam(required = true) String propertyID) {
 		PropertyCriteria propertyCriteria = new PropertyCriteria();
 		propertyCriteria.setPropertyIds(Collections.singleton(propertyID));
 		RequestInfo requestInfo = reportService.getRequestInfo();
-		
-		List<Property> properties = reportService.searchProperty(propertyCriteria ,requestInfo );
 
+		List<Property> properties = reportService.searchProperty(propertyCriteria, requestInfo);
 
 		NiveshMitraMutationResponse resp = new NiveshMitraMutationResponse();
-		Date date = new Date();  
-		TimeZone timezone = TimeZone.getTimeZone("Asia/Kolkata");     
-		SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");  
+		Date date = new Date();
+		TimeZone timezone = TimeZone.getTimeZone("Asia/Kolkata");
+		SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 		formatter.setTimeZone(timezone);
-		String asOnDate= formatter.format(date);  
+		String asOnDate = formatter.format(date);
 		resp.setAsOnDateTimeStr(asOnDate);
 		resp.setValid("NO");
 		resp.setPropertyID(propertyID);
@@ -74,7 +66,7 @@ public class NiveshMitraReportsController {
 		if (properties != null && !properties.isEmpty()) {
 			Property prop = properties.get(0);
 			AssessmentRequest assessmentReq = new AssessmentRequest();
-			Assessment assessment= new Assessment();
+			Assessment assessment = new Assessment();
 			assessment.setChannel(Channel.CFC_COUNTER);
 			assessment.setFinancialYear(CommonUtils.currentFinancialYear());
 			assessment.setPropertyId(propertyID);
@@ -86,7 +78,8 @@ public class NiveshMitraReportsController {
 			CalculationRes res = calculationService.getEstimate(assessmentReq);
 			if (res != null) {
 				resp.setValid("YES");
-				resp.setFullhousetaxpaid( res.getCalculation().get(0).getTotalAmount().doubleValue() > 0.0 ? "NO" : "YES");
+				resp.setFullhousetaxpaid(
+						res.getCalculation().get(0).getTotalAmount().doubleValue() > 0.0 ? "NO" : "YES");
 
 				resp.setZoneName(prop.getAddress().getZone());
 				resp.setWardName(prop.getAddress().getWard());
@@ -96,8 +89,8 @@ public class NiveshMitraReportsController {
 				resp.setMobile(prop.getOwners().get(0).getMobileNumber());
 				resp.setOwnerName(prop.getOwners().get(0).getName());
 				resp.setFatherName(prop.getOwners().get(0).getFatherOrHusbandName());
-			} 
-		} 
+			}
+		}
 
 		return new ResponseEntity<>(resp, HttpStatus.OK);
 	}
@@ -105,29 +98,41 @@ public class NiveshMitraReportsController {
 	@GetMapping("/houseTaxData")
 	public ResponseEntity<?> houseTaxData() {
 
-		NiveshMitraTaxResponse[] taxCollectionRespArray;
-		List <Map<String,Object>> resp = repository.getHouseTaxData();
-		log.info("Got Response from db", resp);
-		Iterator<Map<String, Object>> iterator = resp.iterator();
-		while(iterator.hasNext()) {
-			Map<String, Object> houseTaxObj = iterator.next();
-			log.info("Response for tenant house tax", houseTaxObj);
+		ArrayList<NiveshMitraTaxResponse> taxCollectionRespArray = new ArrayList<NiveshMitraTaxResponse> ();
+
+		List<HashMap<String, String>> resp = repository.getHouseTaxData();
+
+		if (resp != null) {
+			Iterator<HashMap<String, String>> iterator = resp.iterator();
+			while (iterator.hasNext()) {
+				HashMap<String, String> houseTaxObj = iterator.next();
+				NiveshMitraTaxResponse taxResp = NiveshMitraTaxResponse.taxRespObjFromHashMap(houseTaxObj);
+				taxCollectionRespArray.add(taxResp);
+			}
 		}
-		return new ResponseEntity<>(null, HttpStatus.OK);
+		return new ResponseEntity<>(taxCollectionRespArray, HttpStatus.OK);
 	}
+
 	@GetMapping("/waterTaxData")
 	public ResponseEntity<?> waterTaxData() {
 
-		NiveshMitraTaxResponse[] taxCollectionRespArray;
-		
+		ArrayList<NiveshMitraTaxResponse> taxCollectionRespArray = new ArrayList<NiveshMitraTaxResponse> ();
 
-		return new ResponseEntity<>(null, HttpStatus.OK);
+		List<HashMap<String, String>> resp = repository.getWaterTaxData();
+
+		if (resp != null) {
+			Iterator<HashMap<String, String>> iterator = resp.iterator();
+			while (iterator.hasNext()) {
+				HashMap<String, String> houseTaxObj = iterator.next();
+				NiveshMitraTaxResponse taxResp = NiveshMitraTaxResponse.taxRespObjFromHashMap(houseTaxObj);
+				taxCollectionRespArray.add(taxResp);
+			}
+		}
+		return new ResponseEntity<>(taxCollectionRespArray, HttpStatus.OK);
 	}
+
 	@GetMapping("/ptCountDemand")
 	public ResponseEntity<?> ptCountDemand() {
-
-		NiveshMitraTaxResponse[] taxCollectionRespArray;
-		
 
 		return new ResponseEntity<>(null, HttpStatus.OK);
 	}

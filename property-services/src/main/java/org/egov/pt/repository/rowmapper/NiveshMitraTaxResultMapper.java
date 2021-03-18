@@ -9,7 +9,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
 @Component
-public class NiveshMitraTaxResultMapper implements ResultSetExtractor<List<?>> {
+public class NiveshMitraTaxResultMapper implements ResultSetExtractor<List<HashMap<String, String>>> {
 
 
 	@Override
