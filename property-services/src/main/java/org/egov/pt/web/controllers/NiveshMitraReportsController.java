@@ -69,7 +69,7 @@ public class NiveshMitraReportsController {
 		resp.setAsOnDateTimeStr(asOnDate);
 		resp.setValid("NO");
 		resp.setPropertyID(propertyID);
-		resp.setUibcode("");
+		resp.setUlbcode("");
 
 		if (properties != null && !properties.isEmpty()) {
 			Property prop = properties.get(0);
@@ -97,6 +97,7 @@ public class NiveshMitraReportsController {
 				resp.setMobile(prop.getOwners().get(0).getMobileNumber());
 				resp.setOwnerName(prop.getOwners().get(0).getName());
 				resp.setFatherName(prop.getOwners().get(0).getFatherOrHusbandName());
+				resp.setUlbcode(CommonUtils.getULBCodeForTenantId(prop.getTenantId()));
 			}
 		}
 

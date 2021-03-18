@@ -52,6 +52,6 @@ public class NiveshMitraMutationResponse   {
   private String areaOfLand;
   @JsonProperty("fullhousetaxpaid")
   private String fullhousetaxpaid;
-  @JsonProperty("uibcode")
-  private String uibcode;
+  @JsonProperty("ulbcode")
+  private String ulbcode;
 }
