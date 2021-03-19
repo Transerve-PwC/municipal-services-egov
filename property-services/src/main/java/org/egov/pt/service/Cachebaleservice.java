@@ -2,7 +2,6 @@ package org.egov.pt.service;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -127,11 +126,9 @@ public class Cachebaleservice {
 	        return null;
 	    }
 	 
-	 @Cacheable(value="wardname" ,key ="#localityCode" ,sync = true)
+	 @Cacheable(value="wardname" ,key ="#localitycode" ,sync = true)
 	 public String getWardNameFromLocalityCode(String localityCode, String tenantId, org.egov.common.contract.request.RequestInfo requestinfo)
 	 {
-		 
-
          try {
 				StringBuilder uri = new StringBuilder(config.getMdmsHost()).append(config.getMdmsEndpoint());
 				MdmsCriteriaReq criteriaReq = prepareMdMsRequest(tenantId, "egov-location",
@@ -150,8 +147,8 @@ public class Cachebaleservice {
 						
 						if(String.valueOf(localityMap.get("code")).equalsIgnoreCase(localityCode))
 						{
-							System.out.println(" ward name  "+String.valueOf(wardMap.get("wardname")));
-							return String.valueOf(wardMap.get("wardname"));
+							System.out.println(" ward name  "+String.valueOf(wardMap.get("name")));
+							return "Ward-" + String.valueOf(wardMap.get("name"));
 						}
 						
 					}
@@ -191,8 +188,8 @@ public class Cachebaleservice {
 							
 							if(String.valueOf(localityMap.get("code")).equalsIgnoreCase(localityCode))
 							{
-								System.out.println(" zone name  "+String.valueOf(zoneMap.get("localname")));
-								return String.valueOf(zoneMap.get("localname"));
+								System.out.println(" zone name  "+String.valueOf(zoneMap.get("name")));
+								return "Zone-" + String.valueOf(zoneMap.get("name"));
 							}
 							
 						}

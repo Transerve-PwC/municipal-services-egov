@@ -89,7 +89,7 @@ public class NiveshMitraReportsController {
 				resp.setFullhousetaxpaid(
 						res.getCalculation().get(0).getTotalAmount().doubleValue() > 0.0 ? "NO" : "YES");
 
-				resp.setZoneName(prop.getAddress().getZone());
+				resp.setZoneName(cacheService.getZoneNameFromLocalityCode(prop.getAddress().getLocality().getCode(), prop.getTenantId(), requestInfo));
 				resp.setWardName(cacheService.getWardNameFromLocalityCode(prop.getAddress().getLocality().getCode(), prop.getTenantId(), requestInfo));
 				resp.setMohallaName(prop.getAddress().getLocality().getName());
 				resp.setAddress(prop.getAddress().getDoorNo());
