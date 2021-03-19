@@ -23,14 +23,20 @@ public class NiveshMitraReportsRepository {
 	@Autowired
 	private NiveshMitraDemandCountMapper demandResultMapper;
     
-	public List<HashMap<String,String>> getHouseTaxData() {
-		String query = "select edv.tenantid ,sum(edv.collectionamount), count(edv.id) from egbs_demanddetail_v1 edv where edv.taxheadcode = 'PT_HOUSE_TAX' and edv.collectionamount > 0 GROUP BY edv.tenantid";
-		return jdbcTemplate.query(query, rowMapper);
+	public List<HashMap<String,String>> getHouseTaxData(String startEpoch, String endEpoch) {
+		List<Object> preparedStmtList = new ArrayList<>();
+		preparedStmtList.add(Long.valueOf(startEpoch));
+		preparedStmtList.add(Long.valueOf(endEpoch));
+		String query = "select edv.tenantid ,sum(edv.collectionamount), count(edd.id) from egbs_demanddetail_v1 edv inner join egbs_demand_v1 edd on edd.id=edv.demandid where edv.taxheadcode = 'PT_HOUSE_TAX' and edv.collectionamount > 0 and edd.status='ACTIVE' and edd.taxperiodfrom = ? and edd.taxperiodto = ? GROUP BY edv.tenantid;";
+		return jdbcTemplate.query(query, preparedStmtList.toArray(), rowMapper);
 	}
 
-	public List<HashMap<String,String>> getWaterTaxData() {
-		String query = "select edv.tenantid ,sum(edv.collectionamount), count(edv.id) from egbs_demanddetail_v1 edv where edv.taxheadcode = 'PT_WATER_TAX' and edv.collectionamount > 0 GROUP BY edv.tenantid";
-		return jdbcTemplate.query(query, rowMapper);
+	public List<HashMap<String,String>> getWaterTaxData(String startEpoch, String endEpoch) {
+		List<Object> preparedStmtList = new ArrayList<>();
+		preparedStmtList.add(Long.valueOf(startEpoch));
+		preparedStmtList.add(Long.valueOf(endEpoch));
+		String query = "select edv.tenantid ,sum(edv.collectionamount), count(edd.id) from egbs_demanddetail_v1 edv inner join egbs_demand_v1 edd on edd.id=edv.demandid where edv.taxheadcode = 'PT_WATER_TAX' and edv.collectionamount > 0 and edd.status='ACTIVE' and edd.taxperiodfrom = ? and edd.taxperiodto = ? GROUP BY edv.tenantid;";
+		return jdbcTemplate.query(query, preparedStmtList.toArray(), rowMapper);
 	}
 
 	public List<HashMap<String,String>> getDemandData(String startEpoch, String endEpoch) {
