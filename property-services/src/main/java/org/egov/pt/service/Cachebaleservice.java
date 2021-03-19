@@ -127,7 +127,7 @@ public class Cachebaleservice {
 	        return null;
 	    }
 	 
-	 @Cacheable(value="wardname" ,key ="#localitycode" ,sync = true)
+	 @Cacheable(value="wardname" ,key ="#localityCode" ,sync = true)
 	 public String getWardNameFromLocalityCode(String localityCode, String tenantId, org.egov.common.contract.request.RequestInfo requestinfo)
 	 {
 		 
