@@ -24,12 +24,12 @@ public class NiveshMitraReportsRepository {
 	private NiveshMitraDemandCountMapper demandResultMapper;
     
 	public List<HashMap<String,String>> getHouseTaxData() {
-		String query = "select edv.tenantid ,sum(edv.collectionamount), count(edv.id) from egbs_demanddetail_v1 edv where edv.taxheadcode = 'PT_HOUSE_TAX' and edv.collectionamount > 0 GROUP BY edv.tenantid";
+		String query = "select edv.tenantid ,sum(edv.collectionamount), count(edv.id) from egbs_demanddetail_v1 edv inner join egbs_demand_v1 edd on edd.id=edv.demandid  where edv.taxheadcode = 'PT_HOUSE_TAX' and edv.collectionamount > 0 and edd.status='ACTIVE' and edd.taxperiodfrom = '1554076799000' and edd.taxperiodto = '1585679399000' GROUP BY edv.tenantid";
 		return jdbcTemplate.query(query, rowMapper);
 	}
 
 	public List<HashMap<String,String>> getWaterTaxData() {
-		String query = "select edv.tenantid ,sum(edv.collectionamount), count(edv.id) from egbs_demanddetail_v1 edv where edv.taxheadcode = 'PT_WATER_TAX' and edv.collectionamount > 0 GROUP BY edv.tenantid";
+		String query = "select edv.tenantid ,sum(edv.collectionamount), count(edv.id) from egbs_demanddetail_v1 edv inner join egbs_demand_v1 edd on edd.id=edv.demandid  where edv.taxheadcode = 'PT_WATER_TAX' and edv.collectionamount > 0 and edd.status='ACTIVE' and edd.taxperiodfrom = '1554076799000' and edd.taxperiodto = '1585679399000' GROUP BY edv.tenantid";
 		return jdbcTemplate.query(query, rowMapper);
 	}
 
