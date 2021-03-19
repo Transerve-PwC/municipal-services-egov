@@ -104,7 +104,7 @@ public class Cachebaleservice {
 						
 						ArrayList<Map<Object, Object>> childrenList = (ArrayList<Map<Object, Object>>)zoneMap.get("children");
 						
-						System.out.println(zoneMap.get("code"));
+						// System.out.println(zoneMap.get("code"));
 						
 						for (Map<Object, Object> localityMap : childrenList) {
 							wardsMap.put(localityMap.get("code").toString(), String.valueOf(zoneMap.get("name")));
@@ -112,7 +112,7 @@ public class Cachebaleservice {
 						
 					}
 					
-					log.info(" wardsMap size {}  ",wardsMap.size());
+					// log.info(" wardsMap size {}  ",wardsMap.size());
 					
 					
 					return  wardsMap;
@@ -141,13 +141,13 @@ public class Cachebaleservice {
 					
 					ArrayList<Map<Object, Object>> childrenList = (ArrayList<Map<Object, Object>>)wardMap.get("children");
 					
-					System.out.println(wardMap.get("name"));
+					// System.out.println(wardMap.get("name"));
 					
 					for (Map<Object, Object> localityMap : childrenList) {
 						
 						if(String.valueOf(localityMap.get("code")).equalsIgnoreCase(localityCode))
 						{
-							System.out.println(" ward name  "+String.valueOf(wardMap.get("name")));
+							// System.out.println(" ward name  "+String.valueOf(wardMap.get("name")));
 							return "Ward-" + String.valueOf(wardMap.get("name"));
 						}
 						
@@ -176,19 +176,19 @@ public class Cachebaleservice {
 				
 				for (Map<String, List<Map<String, ArrayList<Map<Object, Object>>>>> zoneMap : boundaries) {
 					
-					System.out.println(zoneMap.get("code"));
+					// System.out.println(zoneMap.get("code"));
 					
 					for (Map<String, ArrayList<Map<Object, Object>>> wards : zoneMap.get("children")) {
 						
 						ArrayList<Map<Object, Object>> childrenList = (ArrayList<Map<Object, Object>>)wards.get("children");
 						
-						System.out.println(zoneMap.get("code"));
+						// System.out.println(zoneMap.get("code"));
 						
 						for (Map<Object, Object> localityMap : childrenList) {
 							
 							if(String.valueOf(localityMap.get("code")).equalsIgnoreCase(localityCode))
 							{
-								System.out.println(" zone name  "+String.valueOf(zoneMap.get("name")));
+								// System.out.println(" zone name  "+String.valueOf(zoneMap.get("name")));
 								return String.valueOf(zoneMap.get("name"));
 							}
 							
@@ -222,13 +222,13 @@ public class Cachebaleservice {
 					
 					for (Map<String, List<Map<String, ArrayList<Map<Object, Object>>>>> zoneMap : boundaries) {
 						
-						System.out.println(zoneMap.get("code"));
+						// System.out.println(zoneMap.get("code"));
 						
 						for (Map<String, ArrayList<Map<Object, Object>>> wards : zoneMap.get("children")) {
 							
 							ArrayList<Map<Object, Object>> childrenList = (ArrayList<Map<Object, Object>>)wards.get("children");
 							
-							System.out.println(zoneMap.get("code"));
+							// System.out.println(zoneMap.get("code"));
 							
 							for (Map<Object, Object> localityMap : childrenList) {
 								zonesMap.put(localityMap.get("code").toString(), String.valueOf(zoneMap.get("code")));
@@ -236,7 +236,7 @@ public class Cachebaleservice {
 						}
 					}
 					
-					log.info(" zones map size {}  ",zonesMap.size());
+					// log.info(" zones map size {}  ",zonesMap.size());
 					
 					
 					return  zonesMap;
@@ -323,7 +323,7 @@ public class Cachebaleservice {
 					
 					
 					
-					log.info(" duplicateLocalityMap map size {}  ",duplicateLocalityMap.size());
+					// log.info(" duplicateLocalityMap map size {}  ",duplicateLocalityMap.size());
 					
 					
 					return  duplicateLocalityMap;
