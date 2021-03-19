@@ -107,7 +107,7 @@ public class Cachebaleservice {
 						System.out.println(zoneMap.get("code"));
 						
 						for (Map<Object, Object> localityMap : childrenList) {
-							wardsMap.put(localityMap.get("code").toString(), String.valueOf(zoneMap.get("code")));
+							wardsMap.put(localityMap.get("code").toString(), String.valueOf(zoneMap.get("name")));
 						}
 						
 					}
@@ -126,7 +126,7 @@ public class Cachebaleservice {
 	        return null;
 	    }
 	 
-	 @Cacheable(value="wardname" ,key ="#localitycode" ,sync = true)
+	 @Cacheable(value="wardname" ,key ="#localityCode" ,sync = true)
 	 public String getWardNameFromLocalityCode(String localityCode, String tenantId, org.egov.common.contract.request.RequestInfo requestinfo)
 	 {
          try {
@@ -141,7 +141,7 @@ public class Cachebaleservice {
 					
 					ArrayList<Map<Object, Object>> childrenList = (ArrayList<Map<Object, Object>>)wardMap.get("children");
 					
-					System.out.println(wardMap.get("code"));
+					System.out.println(wardMap.get("name"));
 					
 					for (Map<Object, Object> localityMap : childrenList) {
 						
@@ -163,7 +163,7 @@ public class Cachebaleservice {
 		 
 	 }
 	 
-	 @Cacheable(value="zonename" ,key ="#localitycode" ,sync = true)
+	 @Cacheable(value="zonename" ,key ="#localityCode" ,sync = true)
 	 public String getZoneNameFromLocalityCode(String localityCode, String tenantId, org.egov.common.contract.request.RequestInfo requestinfo)
 	 {
 		 try {
@@ -189,7 +189,7 @@ public class Cachebaleservice {
 							if(String.valueOf(localityMap.get("code")).equalsIgnoreCase(localityCode))
 							{
 								System.out.println(" zone name  "+String.valueOf(zoneMap.get("name")));
-								return "Zone-" + String.valueOf(zoneMap.get("name"));
+								return String.valueOf(zoneMap.get("name"));
 							}
 							
 						}
