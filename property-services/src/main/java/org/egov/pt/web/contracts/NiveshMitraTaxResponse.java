@@ -32,8 +32,8 @@ import lombok.ToString;
 public class NiveshMitraTaxResponse {
 
 
-  @JsonProperty("asOnDateTime")
-  private String asOnDateTimeStr;
+  @JsonProperty("asOnDate")
+  private String asOnDateStr;
   @JsonProperty("amountinRupees")
   private String amountinRupees;
   @JsonProperty("transactionCount")
@@ -47,11 +47,11 @@ public class NiveshMitraTaxResponse {
     NiveshMitraTaxResponse taxResp = new NiveshMitraTaxResponse();
     Date date = new Date();
 		TimeZone timezone = TimeZone.getTimeZone("Asia/Kolkata");
-		SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+		SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy");
 		formatter.setTimeZone(timezone);
 		String asOnDate = formatter.format(date);
     
-    taxResp.setAsOnDateTimeStr(asOnDate);
+    taxResp.setAsOnDateStr(asOnDate);
     taxResp.setFinancialYear(CommonUtils.currentFinancialYear());
     taxResp.setAmountinRupees(houseTaxObj.get("amount"));
     taxResp.setTransactionCount(houseTaxObj.get("count"));

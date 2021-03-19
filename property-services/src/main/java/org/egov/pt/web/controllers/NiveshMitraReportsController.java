@@ -90,7 +90,7 @@ public class NiveshMitraReportsController {
 						res.getCalculation().get(0).getTotalAmount().doubleValue() > 0.0 ? "NO" : "YES");
 
 				resp.setZoneName(prop.getAddress().getZone());
-				resp.setWardName(prop.getAddress().getWard());
+				resp.setWardName(cacheService.getWardNameFromLocalityCode(prop.getAddress().getLocality().getCode(), prop.getTenantId(), requestInfo));
 				resp.setMohallaName(prop.getAddress().getLocality().getName());
 				resp.setAddress(prop.getAddress().getDoorNo());
 				resp.setAreaOfLand(prop.getLandArea().toString());
@@ -106,10 +106,12 @@ public class NiveshMitraReportsController {
 
 	@GetMapping("/houseTaxData")
 	public ResponseEntity<?> houseTaxData() {
+		RequestInfo requestInfo = reportService.getRequestInfo();
+		Map<String, String> financeData = cacheService.getFinancialYearData(CommonUtils.currentFinancialYear(), requestInfo);
 
 		ArrayList<NiveshMitraTaxResponse> taxCollectionRespArray = new ArrayList<NiveshMitraTaxResponse> ();
 
-		List<HashMap<String, String>> resp = repository.getHouseTaxData();
+		List<HashMap<String, String>> resp = repository.getHouseTaxData(String.valueOf(financeData.get("startingDate")),String.valueOf(financeData.get("endingDate")));
 
 		if (resp != null) {
 			Iterator<HashMap<String, String>> iterator = resp.iterator();
@@ -124,10 +126,12 @@ public class NiveshMitraReportsController {
 
 	@GetMapping("/waterTaxData")
 	public ResponseEntity<?> waterTaxData() {
-
+		RequestInfo requestInfo = reportService.getRequestInfo();
+		Map<String, String> financeData = cacheService.getFinancialYearData(CommonUtils.currentFinancialYear(), requestInfo);
+		
 		ArrayList<NiveshMitraTaxResponse> taxCollectionRespArray = new ArrayList<NiveshMitraTaxResponse> ();
 
-		List<HashMap<String, String>> resp = repository.getWaterTaxData();
+		List<HashMap<String, String>> resp = repository.getWaterTaxData(String.valueOf(financeData.get("startingDate")),String.valueOf(financeData.get("endingDate")));
 
 		if (resp != null) {
 			Iterator<HashMap<String, String>> iterator = resp.iterator();
@@ -210,15 +214,15 @@ public class NiveshMitraReportsController {
 								   
                                    Map<String,String> m = new HashMap<>();
 
-								   Double amt = CommonUtils.stringToDouble(String.valueOf(m2.get("totalcollection")));
-								   Double cnt = CommonUtils.stringToDouble(String.valueOf(m2.get("count")));
-								   Double dmdAmt = CommonUtils.stringToDouble(String.valueOf(m2.get("totaldemand")));
+								   double amt = CommonUtils.stringToDouble(String.valueOf(m2.get("totalcollection")));
+								   int cnt = CommonUtils.stringToInt(String.valueOf(m2.get("count")));
+								   double dmdAmt = CommonUtils.stringToDouble(String.valueOf(m2.get("totaldemand")));
 								   if (m1.containsKey("ulbCode")) {
 										m = m1;
 								   } else {
-									Double m1Amt = CommonUtils.stringToDouble(String.valueOf(m1.get("totalcollection")));
-									Double m1Cnt = CommonUtils.stringToDouble(String.valueOf(m1.get("count")));
-									Double m1DmdAmt = CommonUtils.stringToDouble(String.valueOf(m1.get("totaldemand")));
+									double m1Amt = CommonUtils.stringToDouble(String.valueOf(m1.get("totalcollection")));
+									int m1Cnt = CommonUtils.stringToInt(String.valueOf(m1.get("count")));
+									double m1DmdAmt = CommonUtils.stringToDouble(String.valueOf(m1.get("totaldemand")));
 										switch (m1.get("usagecategory").toString()) {   
 											case "RESIDENTIAL": 
 											m.put("residentialAmount", String.valueOf(m1Amt));
@@ -239,17 +243,17 @@ public class NiveshMitraReportsController {
 									switch (m2.get("usagecategory").toString()) {
 										case "RESIDENTIAL": 
 											m.put("residentialAmount", String.valueOf(CommonUtils.stringToDouble(m1.get("residentialAmount")) + amt));
-											m.put("residentialCount", String.valueOf(CommonUtils.stringToDouble(m1.get("residentialCount")) + cnt));
+											m.put("residentialCount", String.valueOf(CommonUtils.stringToInt(m1.get("residentialCount")) + cnt));
 											m.put("residentialDemand", String.valueOf(CommonUtils.stringToDouble(m1.get("residentialDemand")) + dmdAmt));
 											break;
 										case "MIXED":
 											m.put("mixedAmount", String.valueOf(CommonUtils.stringToDouble(m1.get("mixedAmount")) + amt));
-											m.put("mixedCount", String.valueOf(CommonUtils.stringToDouble(m1.get("mixedCount")) + cnt));
+											m.put("mixedCount", String.valueOf(CommonUtils.stringToInt(m1.get("mixedCount")) + cnt));
 											m.put("mixedDemand", String.valueOf(CommonUtils.stringToDouble(m1.get("mixedDemand")) + dmdAmt));
 											break;
 										default:
 											m.put("commercialAmount", String.valueOf(CommonUtils.stringToDouble(m1.get("commercialAmount")) + amt));
-											m.put("commercialCount", String.valueOf(CommonUtils.stringToDouble(m1.get("commercialCount")) + cnt));
+											m.put("commercialCount", String.valueOf(CommonUtils.stringToInt(m1.get("commercialCount")) + cnt));
 											m.put("commercialDemand", String.valueOf(CommonUtils.stringToDouble(m1.get("commercialDemand")) + dmdAmt));
 									}
 									m.put("ulbCode", CommonUtils.getULBCodeForTenantId(m2.get("tenantid")));
