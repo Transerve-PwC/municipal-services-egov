@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -39,6 +40,7 @@ import org.egov.pt.repository.rowmapper.LegacyExcelRowMapper;
 import org.egov.pt.util.PTConstants;
 import org.egov.pt.util.PropertyUtil;
 import org.egov.pt.web.controllers.PropertyController;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -156,6 +158,7 @@ public class UPMigrationService {
 			} catch (Exception e) {
 				log.error(" duplicate phone number hence creating duplicate user for mobilenumber {}",userRequest.getUserName() );
 				 userRequest.setUserName(UUID.randomUUID().toString());
+				 log.error(legacyRow.toString());
 				userDetailResponse1 = userService.createUser(userCreateRequestInfo, userRequest);
 			} 
 			  user = userDetailResponse1.getUser().get(0);
@@ -196,6 +199,9 @@ public class UPMigrationService {
         		 // Invalid name. Only alphabets and special characters -, ',`, .
         		 name = name.replaceAll("[\\$\"'<>?\\\\~`!@#$%^()+={}\\[\\]*,.:;“”‘’]*", "");
         		 name = name.length() > 100 ? name.substring(0, 99) : name;
+        		 
+        		 String tenantId = "up." + legacyRow.getULBName().toLowerCase();
+                 checkIfSaharanpurAndHandleExponentialMobile(tenantId, legacyRow);
 
         		 if(legacyRow.getMobile()!= null)
         		 {
@@ -227,6 +233,7 @@ public class UPMigrationService {
             try {
                 legacyRow = legacyExcelRowMapper.map(row);
                 String tenantId = "up." + legacyRow.getULBName().toLowerCase();
+                checkIfSaharanpurAndHandleExponentialMobile(tenantId, legacyRow);
 
                 // Create user if not exists in db.
                 User user = this.createUserIfNotExists(legacyRow , existingUser);
@@ -242,22 +249,26 @@ public class UPMigrationService {
                         .build();
 
                 Map<String, String> localityMap = cachebaleservice.getLocalityMap(tenantId, requestinfo);
+                log.info("*************1:"+legacyRow.getLocality().trim().toLowerCase());
+                log.info("*************2:"+localityMap.get(legacyRow.getLocality().trim().toLowerCase()));
                 String localityCode = localityMap.get(legacyRow.getLocality().trim().toLowerCase());
                 if (localityCode == null) {
                     log.warn("Empty locality code for the property {}", legacyRow.getLocality());
                 }
                 
-                if(tenantId.equalsIgnoreCase("up.Bareilly"))
+                if(tenantId.equalsIgnoreCase("up.Bareilly") || tenantId.equalsIgnoreCase("up.saharanpur"))
                 {
               	  HashMap<String,HashMap<String,HashMap<String, String>>> duplicateMap = cachebaleservice.getDuplicateLocalitiesMap(tenantId, requestinfo);
+              	  log.info("*******************duplicateLocalityMap:"+duplicateMap);
               	  if(duplicateMap.containsKey(legacyRow.getLocality().trim().toLowerCase()))
               	  {
+              		  log.warn("Locality code for the property {} was found from duplicateLocalityMap : {}", legacyRow.getLocality(),duplicateMap.get(legacyRow.getLocality().trim().toLowerCase()));
               		  String zone = legacyRow.getZone();
               		  String wardNo = legacyRow.getWardNo();
               		
               		  wardNo = wardNo.replace(".0", "");
-              		  zone = zone.replaceAll("Zone-", "");
-              		  
+  					  if (Objects.nonNull(zone) && !tenantId.equalsIgnoreCase("up.saharanpur"))
+  							zone = zone.replaceAll("Zone-", "");
               		  localityCode = duplicateMap.get(legacyRow.getLocality().trim().toLowerCase()).get(zone).get(wardNo);
               	  }            	  
               	  
@@ -474,7 +485,7 @@ public class UPMigrationService {
     
 
  
-  public void importPropertiesParallel(InputStream file, InputStream matchedFile, Long skip, Long limit) throws Exception {
+    public void importPropertiesParallel(InputStream file, InputStream matchedFile, Long skip, Long limit) throws Exception {
 
       // Build matched usage type map
       BufferedReader br = new BufferedReader(new InputStreamReader(matchedFile));
@@ -507,7 +518,10 @@ public class UPMigrationService {
 			        // Invalid name. Only alphabets and special characters -, ',`, .
 			        name = name.replaceAll("[\\$\"'<>?\\\\~`!@#$%^()+={}\\[\\]*,.:;“”‘’]*", "");
 			        name = name.length() > 100 ? name.substring(0, 99) : name;
-					
+			        
+			        String tenantId = "up." + legacyRow.getULBName().toLowerCase();
+				    checkIfSaharanpurAndHandleExponentialMobile(tenantId, legacyRow);
+			        
 			        if(legacyRow.getMobile()!= null)
 			        {
 					  if(!duplicateMobileNumbers.add(legacyRow.getMobile().trim()+name.trim()))
@@ -544,6 +558,7 @@ public class UPMigrationService {
           try {
               legacyRow = legacyExcelRowMapper.map(row);
               String tenantId = "up." + legacyRow.getULBName().toLowerCase();
+              checkIfSaharanpurAndHandleExponentialMobile(tenantId, legacyRow);
 
               // Create user if not exists in db.
               User user = this.createUserIfNotExists(legacyRow , existingUser);
@@ -558,23 +573,27 @@ public class UPMigrationService {
                       .build();
 
               Map<String, String> localityMap = cachebaleservice.getLocalityMap(tenantId, requestinfo);
+              log.info("*************1:"+legacyRow.getLocality().trim().toLowerCase());
+              log.info("*************2:"+localityMap.get(legacyRow.getLocality().trim().toLowerCase()));
               String localityCode = localityMap.get(legacyRow.getLocality().trim().toLowerCase());
               if (localityCode == null) {
                   log.warn("Empty locality code for the property {}", legacyRow.getLocality());
               }
               
               
-              if(tenantId.equalsIgnoreCase("up.Bareilly"))
+              if(tenantId.equalsIgnoreCase("up.Bareilly") || tenantId.equalsIgnoreCase("up.saharanpur"))
               {
             	  HashMap<String,HashMap<String,HashMap<String, String>>> duplicateMap = cachebaleservice.getDuplicateLocalitiesMap(tenantId, requestinfo);
+            	  log.info("*******************duplicateLocalityMap:"+duplicateMap);
             	  if(duplicateMap.containsKey(legacyRow.getLocality().trim().toLowerCase()))
             	  {
+            		  log.warn("Locality codes for the property {} found from duplicateLocalityMap : {}", legacyRow.getLocality(),duplicateMap.get(legacyRow.getLocality().trim().toLowerCase()));
             		  String zone = legacyRow.getZone();
             		  String wardNo = legacyRow.getWardNo();
             		
             		  wardNo = wardNo.replace(".0", "");
-            		  zone = zone.replaceAll("Zone-", "");
-            		  
+					  if (Objects.nonNull(zone) && !tenantId.equalsIgnoreCase("up.saharanpur"))
+							zone = zone.replaceAll("Zone-", "");
             		  localityCode = duplicateMap.get(legacyRow.getLocality().trim().toLowerCase()).get(zone).get(wardNo);
             	  }            	  
             	  
@@ -803,6 +822,17 @@ public class UPMigrationService {
     
      
   }
+    
+	private void checkIfSaharanpurAndHandleExponentialMobile(String tenantId, LegacyRow legacyRow) {
+		if (tenantId.equalsIgnoreCase("up.saharanpur") && legacyRow.getMobile() != null
+				&& legacyRow.getMobile().contains(".") && legacyRow.getMobile().contains("E")) {
+			String exponentialFormat = legacyRow.getMobile();
+			String[] parts = exponentialFormat.split("E");
+			String numberFormat = new BigDecimal(parts[0] + "E+" + parts[1]).toBigInteger().toString();
+			legacyRow.setMobile(numberFormat);
+			log.debug("mobile:" + legacyRow.getMobile());
+		}
+	}
   
     
     

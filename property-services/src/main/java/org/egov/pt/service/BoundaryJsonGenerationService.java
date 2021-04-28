@@ -52,6 +52,8 @@ public class BoundaryJsonGenerationService {
 			filename = config.getBareillyBoundaryFile();
 		else if(cityName.equalsIgnoreCase("moradabad"))
 			filename = config.getMoradabadBoundaryFile();
+		else if(cityName.equalsIgnoreCase("saharanpur"))
+			filename = config.getSaharanpurBoundaryFile();
 
 		String[] acceptedHeaders = new String[] {"SR.NO","ZONE CODE","ZONE NAME","WARD CODE","WARD NAME","LOCALITY (MOHALLA) NAME","RCC or RBC Pakka House",
 				"Other Pakka House","Kachha House","Empty Land"};
@@ -310,6 +312,10 @@ public class BoundaryJsonGenerationService {
 						}else if(cityName.equalsIgnoreCase("moradabad"))
 						{
 						locality.addProperty("code", "MOR00"+localityIncrementer );
+						}
+						else if(cityName.equalsIgnoreCase("saharanpur"))
+						{
+						locality.addProperty("code", "SAH00"+localityIncrementer );
 						}
 						idIncrementer++;
 						localityIncrementer++;
