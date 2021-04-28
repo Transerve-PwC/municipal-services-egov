@@ -2,7 +2,6 @@ package org.egov.pt.service;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -44,6 +43,19 @@ public class Cachebaleservice {
 	 private static final String TENANTS_BAREILLY = "up.bareilly";
 	 private static final String TENANTS_SAHARANPUR = "up.saharanpur";
 
+	 @Cacheable(value="finYearRange", key="#financeRange", sync = true)
+	  public Map<String, String> getFinancialYearData(String financeRange, org.egov.common.contract.request.RequestInfo requestinfo){
+			StringBuilder uri = new StringBuilder(config.getMdmsHost()).append(config.getMdmsEndpoint());
+	        MdmsCriteriaReq criteriaReq = prepareMdMsRequest("up", "egf-master", Arrays.asList(new String[] { "FinancialYear" }), "$[?(@.module=='PT')]", requestinfo);
+	            Optional<Object> response = restRepo.fetchResult(uri, criteriaReq);
+	            List<Map<String, String>> financialYears = JsonPath.read(response.get(),"$.MdmsRes.egf-master.FinancialYear");
+	            
+	           List<Map<String, String>> data = financialYears.stream().filter(obj -> obj.get("code").toString().equalsIgnoreCase(financeRange)).collect(Collectors.toList());
+				if (data != null && data.size() > 0) {
+					return data.get(0);
+				}
+				return null;
+	  }
 	
 	 @Cacheable(value="localities" ,key ="#tenantId" ,sync = true)
 	    public Map<String, String> getLocalityMap(String tenantId, org.egov.common.contract.request.RequestInfo requestinfo) {
@@ -100,15 +112,15 @@ public class Cachebaleservice {
 						
 						ArrayList<Map<Object, Object>> childrenList = (ArrayList<Map<Object, Object>>)zoneMap.get("children");
 						
-						System.out.println(zoneMap.get("code"));
+						// System.out.println(zoneMap.get("code"));
 						
 						for (Map<Object, Object> localityMap : childrenList) {
-							wardsMap.put(localityMap.get("code").toString(), String.valueOf(zoneMap.get("code")));
+							wardsMap.put(localityMap.get("code").toString(), String.valueOf(zoneMap.get("name")));
 						}
 						
 					}
 					
-					log.info(" wardsMap size {}  ",wardsMap.size());
+					// log.info(" wardsMap size {}  ",wardsMap.size());
 					
 					
 					return  wardsMap;
@@ -121,6 +133,87 @@ public class Cachebaleservice {
 	        
 	        return null;
 	    }
+	 
+	 @Cacheable(value="wardname" ,key ="#localityCode" ,sync = true)
+	 public String getWardNameFromLocalityCode(String localityCode, String tenantId, org.egov.common.contract.request.RequestInfo requestinfo)
+	 {
+         try {
+				StringBuilder uri = new StringBuilder(config.getMdmsHost()).append(config.getMdmsEndpoint());
+				MdmsCriteriaReq criteriaReq = prepareMdMsRequest(tenantId, "egov-location",
+				        Arrays.asList(new String[] { "TenantBoundary" }), "$..[?(@.label=='Ward')]", requestinfo);
+				Optional<Object> response = restRepo.fetchResult(uri, criteriaReq);
+				List<Map<String, ArrayList<Map<Object, Object>>>> boundaries = JsonPath.read(response.get(),"$.MdmsRes.egov-location.TenantBoundary");
+				
+				
+				for (Map<String, ArrayList<Map<Object, Object>>> wardMap : boundaries) {
+					
+					ArrayList<Map<Object, Object>> childrenList = (ArrayList<Map<Object, Object>>)wardMap.get("children");
+					
+					// System.out.println(wardMap.get("name"));
+					
+					for (Map<Object, Object> localityMap : childrenList) {
+						
+						if(String.valueOf(localityMap.get("code")).equalsIgnoreCase(localityCode))
+						{
+							// System.out.println(" ward name  "+String.valueOf(wardMap.get("name")));
+							return "Ward-" + String.valueOf(wardMap.get("name"));
+						}
+						
+					}
+					
+				}
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+		return "";
+		 
+	 }
+	 
+	 @Cacheable(value="zonename" ,key ="#localityCode" ,sync = true)
+	 public String getZoneNameFromLocalityCode(String localityCode, String tenantId, org.egov.common.contract.request.RequestInfo requestinfo)
+	 {
+		 try {
+				StringBuilder uri = new StringBuilder(config.getMdmsHost()).append(config.getMdmsEndpoint());
+				MdmsCriteriaReq criteriaReq = prepareMdMsRequest(tenantId, "egov-location",
+				        Arrays.asList(new String[] { "TenantBoundary" }), "$..[?(@.label=='Zone')]", requestinfo);
+				Optional<Object> response = restRepo.fetchResult(uri, criteriaReq);
+				List<Map<String, List<Map<String, ArrayList<Map<Object, Object>>>>>> boundaries = JsonPath.read(response.get(),"$.MdmsRes.egov-location.TenantBoundary");
+				
+				
+				for (Map<String, List<Map<String, ArrayList<Map<Object, Object>>>>> zoneMap : boundaries) {
+					
+					// System.out.println(zoneMap.get("code"));
+					
+					for (Map<String, ArrayList<Map<Object, Object>>> wards : zoneMap.get("children")) {
+						
+						ArrayList<Map<Object, Object>> childrenList = (ArrayList<Map<Object, Object>>)wards.get("children");
+						
+						// System.out.println(zoneMap.get("code"));
+						
+						for (Map<Object, Object> localityMap : childrenList) {
+							
+							if(String.valueOf(localityMap.get("code")).equalsIgnoreCase(localityCode))
+							{
+								// System.out.println(" zone name  "+String.valueOf(zoneMap.get("name")));
+								return String.valueOf(zoneMap.get("name"));
+							}
+							
+						}
+					}
+				}
+				
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		 
+		 
+		 return "";
+	 }
+	 
+	 
 	 
 	 @Cacheable(value="zone" ,key ="#tenantId" ,sync = true)
 	    public Map<String, String> getZoneMap(String tenantId, org.egov.common.contract.request.RequestInfo requestinfo) {
@@ -138,13 +231,13 @@ public class Cachebaleservice {
 					
 					for (Map<String, List<Map<String, ArrayList<Map<Object, Object>>>>> zoneMap : boundaries) {
 						
-						System.out.println(zoneMap.get("code"));
+						// System.out.println(zoneMap.get("code"));
 						
 						for (Map<String, ArrayList<Map<Object, Object>>> wards : zoneMap.get("children")) {
 							
 							ArrayList<Map<Object, Object>> childrenList = (ArrayList<Map<Object, Object>>)wards.get("children");
 							
-							System.out.println(zoneMap.get("code"));
+							// System.out.println(zoneMap.get("code"));
 							
 							for (Map<Object, Object> localityMap : childrenList) {
 								zonesMap.put(localityMap.get("code").toString(), String.valueOf(zoneMap.get("code")));
@@ -152,7 +245,7 @@ public class Cachebaleservice {
 						}
 					}
 					
-					log.info(" zones map size {}  ",zonesMap.size());
+					// log.info(" zones map size {}  ",zonesMap.size());
 					
 					
 					return  zonesMap;
@@ -240,7 +333,7 @@ public class Cachebaleservice {
 					
 					
 					
-					log.info(" duplicateLocalityMap map size {}  ",duplicateLocalityMap.size());
+					// log.info(" duplicateLocalityMap map size {}  ",duplicateLocalityMap.size());
 					
 					
 					return  duplicateLocalityMap;
