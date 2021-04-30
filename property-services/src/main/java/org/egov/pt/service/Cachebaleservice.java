@@ -17,6 +17,7 @@ import org.egov.mdms.model.ModuleDetail;
 import org.egov.pt.config.PropertyConfiguration;
 import org.egov.pt.models.user.User;
 import org.egov.pt.repository.ServiceRequestRepository;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -40,6 +41,7 @@ public class Cachebaleservice {
 	
 	 private static final String TENANTS_MORADABAD = "up.moradabad";
 	 private static final String TENANTS_BAREILLY = "up.bareilly";
+	 private static final String TENANTS_SAHARANPUR = "up.saharanpur";
 
 	 @Cacheable(value="finYearRange", key="#financeRange", sync = true)
 	  public Map<String, String> getFinancialYearData(String financeRange, org.egov.common.contract.request.RequestInfo requestinfo){
@@ -70,27 +72,33 @@ public class Cachebaleservice {
 	            
 	            return ((HashMap<String, String>) localityMap).entrySet().parallelStream().collect(Collectors.toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue));
 	        }
-	        if (TENANTS_BAREILLY.equalsIgnoreCase(tenantId)) {
+	    	else {
 	            StringBuilder uri = new StringBuilder(config.getMdmsHost()).append(config.getMdmsEndpoint());
 	            MdmsCriteriaReq criteriaReq = prepareMdMsRequest(tenantId, "egov-location",
 	                    Arrays.asList(new String[] { "TenantBoundary" }), "$..[?(@.label=='Locality')]", requestinfo);
 	            Optional<Object> response = restRepo.fetchResult(uri, criteriaReq);
 	            List<Map<String, String>> boundaries = JsonPath.read(response.get(),"$.MdmsRes.egov-location.TenantBoundary");
-	            
-	            Map<String, String> localityMap = boundaries.stream().collect(Collectors.toMap(b -> b.get("name") , b -> b.get("code"),(oldval,newval) -> newval));
-	            
-	            return ((HashMap<String, String>) localityMap).entrySet().parallelStream().collect(Collectors.toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue));
+	            Map<String, String> localityMap = new HashMap<>();
+	            boundaries.stream().forEach(b->{
+	            	if(localityMap.containsKey(String.valueOf(b.get("name")).toLowerCase())) {
+	            		localityMap.remove(String.valueOf(b.get("name")).toLowerCase());
+	            		return;
+	            	}
+	            	localityMap.put( String.valueOf(b.get("name")).toLowerCase() , b.get("code"));
+	            });
+	            log.debug("localityMap for non-duplicate localities: "+new JSONObject(localityMap));
+	            return localityMap;
 	           
 	         
 
 	        }
-	        return null;
 	    }
 	 
 	 @Cacheable(value="ward" ,key ="#tenantId" ,sync = true)
 	    public Map<String, String> getWardMap(String tenantId, org.egov.common.contract.request.RequestInfo requestinfo) {
 	     
-	    	if (TENANTS_MORADABAD.equalsIgnoreCase(tenantId) || TENANTS_BAREILLY.equalsIgnoreCase(tenantId)) {
+			if (TENANTS_MORADABAD.equalsIgnoreCase(tenantId) || TENANTS_BAREILLY.equalsIgnoreCase(tenantId)
+					|| TENANTS_SAHARANPUR.equalsIgnoreCase(tenantId)) {
 	            try {
 					StringBuilder uri = new StringBuilder(config.getMdmsHost()).append(config.getMdmsEndpoint());
 					MdmsCriteriaReq criteriaReq = prepareMdMsRequest(tenantId, "egov-location",
@@ -210,7 +218,8 @@ public class Cachebaleservice {
 	 @Cacheable(value="zone" ,key ="#tenantId" ,sync = true)
 	    public Map<String, String> getZoneMap(String tenantId, org.egov.common.contract.request.RequestInfo requestinfo) {
 	     
-	    	if (TENANTS_MORADABAD.equalsIgnoreCase(tenantId) || TENANTS_BAREILLY.equalsIgnoreCase(tenantId)) {
+			if (TENANTS_MORADABAD.equalsIgnoreCase(tenantId) || TENANTS_BAREILLY.equalsIgnoreCase(tenantId)
+					|| TENANTS_SAHARANPUR.equalsIgnoreCase(tenantId)) {
 	            try {
 					StringBuilder uri = new StringBuilder(config.getMdmsHost()).append(config.getMdmsEndpoint());
 					MdmsCriteriaReq criteriaReq = prepareMdMsRequest(tenantId, "egov-location",
@@ -252,7 +261,8 @@ public class Cachebaleservice {
 	 @Cacheable(value="duplicateLocalities" ,key ="#tenantId" ,sync = true)
 	    public HashMap<String,HashMap<String,HashMap<String, String>>> getDuplicateLocalitiesMap(String tenantId, org.egov.common.contract.request.RequestInfo requestinfo) {
 	     
-	    	if (TENANTS_MORADABAD.equalsIgnoreCase(tenantId) || TENANTS_BAREILLY.equalsIgnoreCase(tenantId)) {
+			if (TENANTS_MORADABAD.equalsIgnoreCase(tenantId) || TENANTS_BAREILLY.equalsIgnoreCase(tenantId)
+					|| TENANTS_SAHARANPUR.equalsIgnoreCase(tenantId)) {
 	            try {
 					StringBuilder uri = new StringBuilder(config.getMdmsHost()).append(config.getMdmsEndpoint());
 					MdmsCriteriaReq criteriaReq = prepareMdMsRequest(tenantId, "egov-location",
@@ -270,10 +280,10 @@ public class Cachebaleservice {
 						for (Map<String, ArrayList<Map<Object, Object>>> wards : zoneMap.get("children")) {
 							ArrayList<Map<Object, Object>> childrenList = (ArrayList<Map<Object, Object>>)wards.get("children");
 							for (Map<Object, Object> localityMap : childrenList) {
-								if(!allLocalities.add(localityMap.get("name").toString()))
+								if(!allLocalities.add(localityMap.get("name").toString().toLowerCase()))
 								{
-									dupliacteLocalities.add(localityMap.get("name").toString());
-									System.out.println(" Already contained element "+localityMap.get("name"));
+									dupliacteLocalities.add(localityMap.get("name").toString().toLowerCase());
+									log.debug("Already contained element in localityMap: "+localityMap.get("name").toString().toLowerCase());
 								}
 							}
 						}
@@ -284,7 +294,7 @@ public class Cachebaleservice {
 						for (Map<String, ArrayList<Map<Object, Object>>> wards : zoneMap.get("children")) {
 							ArrayList<Map<Object, Object>> childrenList = (ArrayList<Map<Object, Object>>)wards.get("children");
 							for (Map<Object, Object> localityMap : childrenList) {
-								if(dupliacteLocalities.contains(localityMap.get("name").toString()))
+								if(dupliacteLocalities.contains(localityMap.get("name").toString().toLowerCase()))
 								{
 									HashMap<String, String> wardsMap  = new HashMap<String, String>();
 									HashMap<String, HashMap<String, String>> zonesMap  = new HashMap<String, HashMap<String, String>>();

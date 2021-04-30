@@ -327,6 +327,9 @@ public class PropertyConfiguration {
     @Value("${egov.boundary.moradabad.filename}")
     private String moradabadBoundaryFile ;
     
+    @Value("${egov.boundary.saharanpur.filename}")
+    private String saharanpurBoundaryFile ;
+    
     
     @Value("${egov.categories.filename}")
     private String categoriesFile ;

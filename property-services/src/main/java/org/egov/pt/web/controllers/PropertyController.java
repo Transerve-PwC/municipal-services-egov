@@ -149,6 +149,7 @@ public class PropertyController {
 	public ResponseEntity<?> propertyImport(@RequestParam(required = false) Long limit,
 			@RequestParam(required = false, defaultValue = "1") Long skip ,@RequestParam(required = false, defaultValue = "false") Boolean parallelProcessing ) throws Exception {
 		long startTime = System.nanoTime();
+		System.out.println("********skip="+skip+", *********limit="+limit);
 		final InputStream excelFile = loader.getResourceAsStream(config.getMigrationFileName());
 		
 		final InputStream matchedFile = loader.getResourceAsStream("matched.csv");
