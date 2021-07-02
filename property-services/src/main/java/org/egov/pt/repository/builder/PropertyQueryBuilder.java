@@ -194,7 +194,10 @@ public class PropertyQueryBuilder {
 
 			if(appendAndQuery)
 				builder.append(AND_QUERY);
-			builder.append("property.propertyid IN (").append(createQuery(propertyIds)).append(")");
+			builder.append("property.propertyid IN (").append(createQuery(propertyIds)).append(")")
+					.append(" OR property.oldpropertyid IN (").append(createQuery(propertyIds)).append(")");
+			addToPreparedStatementWithUpperCase(preparedStmtList, propertyIds);
+			//for supporting fetch with oldpropertyid by bank - 
 			addToPreparedStatementWithUpperCase(preparedStmtList, propertyIds);
 			appendAndQuery= true;
 		}
