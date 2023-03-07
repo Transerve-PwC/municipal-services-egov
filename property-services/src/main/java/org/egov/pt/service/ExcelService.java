@@ -68,13 +68,16 @@ public class ExcelService {
 	{
 
 		try {
+System.out.println("inside method writeFailedRecords");
 			
 			if(workbook == null)
 			{
+System.out.println("workbook is null inside method writeFailedRecords");
 				getWorkBook();
 			}
 			Sheet sheet = workbook.getSheetAt(0);
 			int rowCount = sheet.getLastRowNum();
+System.out.println("last row count before writing:"+rowCount);
 
 
 			Row row = sheet.createRow(++rowCount);
@@ -92,7 +95,7 @@ public class ExcelService {
 				}
 			}
 
-
+System.out.println("last row count after writing:"+workbook.getSheetAt(0).getLastRowNum());
 		} catch (EncryptedDocumentException e) {
 
 			e.printStackTrace();
@@ -141,6 +144,8 @@ public class ExcelService {
 		try {
 			workbook = WorkbookFactory.create(inputStream);
 		}catch (Exception e) {
+System.out.println("error while creating workbook from existing inputstream");
+			e.printStackTrace();
 		}
 		}
 		return workbook;
@@ -149,10 +154,12 @@ public class ExcelService {
 
 	public synchronized void   createFailedRecordsFile()
 	{
+System.out.println("inside method createFailedRecordsFile");
 		File f = new File(config.getFailedRecordsMigrationFilePath());
 
 		if(!f.exists())
 		{
+System.out.println("failed file does not exist");
 			XSSFWorkbook workbook = new XSSFWorkbook();
 			XSSFSheet sheet = workbook.createSheet("Sheet 1");
 

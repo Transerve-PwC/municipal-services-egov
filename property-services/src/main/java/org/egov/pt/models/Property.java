@@ -102,6 +102,15 @@ public class Property extends PropertyInfo {
 	@JsonProperty("constructionYear")
 	private String constructionYear;
 	
+	 @JsonProperty("waterTax")
+     private BigDecimal waterTax;
+     
+     @JsonProperty("houseTax")
+     private BigDecimal houseTax;
+    
+     @JsonProperty("sewerTax")
+     private BigDecimal sewerTax;
+	
 	
 	
 	@Builder
@@ -110,7 +119,8 @@ public class Property extends PropertyInfo {
 			String propertyType, String ownershipCategory, List<OwnerInfo> owners, Institution institution,
 			CreationReason creationReason, String usageCategory, Long noOfFloors, Double landArea,
 			BigDecimal superBuiltUpArea, Source source, Channel channel, List<Document> documents, List<Unit> units,
-			JsonNode additionalDetails, AuditDetails auditDetails, ProcessInstance workflow , String roadWidth , String constructionYear) {
+			JsonNode additionalDetails, AuditDetails auditDetails, ProcessInstance workflow , String roadWidth , String constructionYear,
+			BigDecimal waterTax, BigDecimal houseTax, BigDecimal sewerTax) {
 		super(id, propertyId, surveyId, linkedProperties, tenantId, accountId, oldPropertyId, status, address);
 		this.acknowldgementNumber = acknowldgementNumber;
 		this.propertyType = propertyType;
@@ -131,6 +141,9 @@ public class Property extends PropertyInfo {
 		this.workflow = workflow;
 		this.roadWidth = roadWidth;
 		this.constructionYear = constructionYear;
+		this.houseTax  = houseTax;
+		this.waterTax = waterTax;
+		this.sewerTax = sewerTax;
 	}
 
 	public Property addOwnersItem(OwnerInfo ownersItem) {
