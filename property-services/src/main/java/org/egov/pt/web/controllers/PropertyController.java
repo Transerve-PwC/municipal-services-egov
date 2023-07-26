@@ -63,7 +63,6 @@ public class PropertyController {
 	
 	@Autowired
 	private BoundaryJsonGenerationService boundaryJson ;
-	
 
 	@PostMapping("/_create")
 	public ResponseEntity<PropertyResponse> create(@Valid @RequestBody PropertyRequest propertyRequest) {

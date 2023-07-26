@@ -86,6 +86,7 @@ public class AssessmentService {
 		}
 		else {
 			calculationService.calculateTax(request, property);
+//			calculationService.fetchTax(request, property);
 		}
 		producer.push(props.getCreateAssessmentTopic(), request);
 

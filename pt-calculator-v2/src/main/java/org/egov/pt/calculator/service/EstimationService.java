@@ -99,7 +99,10 @@ public class EstimationService {
 
 	@Value("${customization.pbfirecesslogic:false}")
 	Boolean usePBFirecessLogic;
-
+	
+	private String HOUSE_TAXHEAD = "PT_HOUSE_TAX";
+	private String WATER_TAXHEAD = "PT_WATER_TAX";
+	private String SEWER_TAXHEAD = "PT_SEWER_TAX";
 
 
 	/**
@@ -112,6 +115,13 @@ public class EstimationService {
 		Map<String,Calculation> res = demandService.generateDemands(calculationReq);
 		return res;
 	}
+	
+	public Map<String, Calculation> CreateDemandWithoutCalculation(CalculationReq calculationReq){
+		//	assessmentService.enrichAssessment(calculationReq);
+			Map<String,Calculation> res = demandService.generateDemandsWithoutCalculation(calculationReq);
+			return res;
+		}
+	
 
 	/**
 	 * Generates a map with assessment-number of property as key and estimation
@@ -154,6 +164,61 @@ public class EstimationService {
         Map<String,Object> masterMap = mDataService.getMasterMap(request);
         log.info("=====================  M[getTaxCalculation]   masterMap {}",masterMap);
         return new CalculationRes(new ResponseInfo(), Collections.singletonList(getCalculation(request.getRequestInfo(), criteria, masterMap)));
+    }
+    
+    public CalculationRes fetchTaxCalculation(CalculationReq request) {
+
+        CalculationCriteria criteria = request.getCalculationCriteria().get(0);
+        Property property = criteria.getProperty();
+        PropertyDetail detail = property.getPropertyDetails().get(0);
+        calcValidator.validatePropertyForCalculation(detail);
+        Map<String,Object> masterMap = mDataService.getMasterMap(request);
+        log.info("=====================  M[getTaxCalculation]   masterMap {}",masterMap);
+        
+        enrichmentService.enrichDemandPeriod(criteria,detail.getFinancialYear(),masterMap);
+        
+        return new CalculationRes(new ResponseInfo(), Collections.singletonList(fetchCalculationFromProperty(criteria,property)));
+    }
+    
+    
+    public Calculation fetchCalculationFromProperty(CalculationCriteria criteria,Property property) {
+    	List<TaxHeadEstimate> taxHeadEstimates = new ArrayList<>();
+    	BigDecimal taxAmt = BigDecimal.ZERO;
+    	PropertyDetail detail = property.getPropertyDetails().get(0);
+		//water tax
+		TaxHeadEstimate waterEstimate = new TaxHeadEstimate();
+		waterEstimate.setTaxHeadCode(WATER_TAXHEAD);
+		waterEstimate.setCategory(Category.TAX);
+		waterEstimate.setEstimateAmount(detail.getWaterTax());
+		taxAmt=taxAmt.add(detail.getWaterTax());
+		taxHeadEstimates.add(waterEstimate);
+		
+		//house tax
+		TaxHeadEstimate houseEstimate = new TaxHeadEstimate();
+		houseEstimate.setTaxHeadCode(HOUSE_TAXHEAD);
+		houseEstimate.setCategory(Category.TAX);
+		houseEstimate.setEstimateAmount(detail.getHouseTax());
+		taxAmt=taxAmt.add(detail.getHouseTax());
+		taxHeadEstimates.add(houseEstimate);
+		
+		//sewer tax
+		TaxHeadEstimate sewerEstimate = new TaxHeadEstimate();
+		sewerEstimate.setTaxHeadCode(SEWER_TAXHEAD);
+		sewerEstimate.setCategory(Category.TAX);
+		sewerEstimate.setEstimateAmount(detail.getSewerTax());
+		taxAmt=taxAmt.add(detail.getSewerTax());
+		taxHeadEstimates.add(sewerEstimate);
+		
+		Calculation calculation = Calculation.builder().fromDate(criteria.getFromDate())
+				.toDate(criteria.getToDate())
+				.serviceNumber(property.getPropertyId())
+				.tenantId(criteria.getTenantId())
+				.taxAmount(taxAmt)
+				.totalAmount(taxAmt)
+				.taxHeadEstimates(taxHeadEstimates)
+				.build();
+		
+		return calculation;
     }
 
 	/**

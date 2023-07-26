@@ -102,6 +102,9 @@ public class TranslationService {
         propertyDetail.put("propertySubType", propertySubType);
         propertyDetail.put("assessmentNumber", assessment.getAssessmentNumber());
         propertyDetail.put("assessmentDate", assessment.getAssessmentDate());
+        propertyDetail.put("waterTax", property.getWaterTax());
+        propertyDetail.put("houseTax", property.getHouseTax());
+        propertyDetail.put("sewerTax", property.getSewerTax());
 
         if(assessment.getAdditionalDetails()!=null){
 

@@ -146,6 +146,15 @@ public class PropertyDetail   {
 
         @JsonProperty("adhocPenalty")
         private BigDecimal adhocPenalty;
+        
+        @JsonProperty("waterTax")
+        private BigDecimal waterTax;
+        
+        @JsonProperty("houseTax")
+        private BigDecimal houseTax;
+       
+        @JsonProperty("sewerTax")
+        private BigDecimal sewerTax;
 
         @JsonProperty("owners")
         @Valid
