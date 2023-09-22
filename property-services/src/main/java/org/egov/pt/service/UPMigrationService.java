@@ -103,7 +103,7 @@ public class UPMigrationService {
         userRequest.setActive(true);
         userRequest.setMobileNumber((legacyRow.getMobile() != null && legacyRow.getMobile() != ""
                 && (new BigDecimal(legacyRow.getMobile()).longValue() != 0)) ? legacyRow.getMobile()
-                        : convertPTINToMobileNumber("5" + legacyRow.getPTIN()));
+                        : convertPtUniqueIdToMobileNumber(legacyRow.getPtmsPropertyId()));
         userRequest.setUserName(userRequest.getMobileNumber());
         userRequest.setPassword("123456");
         userRequest.setFatherOrHusbandName(legacyRow.getFHName() != null && legacyRow.getFHName().length() > 100
@@ -182,6 +182,7 @@ public class UPMigrationService {
 
         AtomicInteger numOfSuccess = new AtomicInteger();
         AtomicInteger numOfErrors = new AtomicInteger();
+        Set<Integer> skippedRows = new HashSet<>();
         
         Set<String> duplicateMobileNumbers = new HashSet<>();
         HashMap<String, User>  existingUser = new HashMap<String, User>();
@@ -313,7 +314,6 @@ public class UPMigrationService {
                 property.setSewerTax(BigDecimal
                 		.valueOf(Double.valueOf(legacyRow.getSewerTax()!= null && !legacyRow.getSewerTax().isEmpty() ? legacyRow.getSewerTax() : "0")));
                
-                System.out.println("legacyRow.getPtmsPropertyId()**********"+legacyRow.getPtmsPropertyId());
                 property.setPropertyIDPTMS(legacyRow.getPtmsPropertyId());
                 
                 propertyExcelRepository.save(property);
@@ -446,6 +446,7 @@ public class UPMigrationService {
                 numOfSuccess.getAndIncrement();
             } catch (Exception e) {
                 numOfErrors.getAndIncrement();
+                skippedRows.add(row.getRowIndex());
 //FaieldCodes 1 = failed at owner insertion , 2 = failed at unit insertion , 3 = failed at address insertion , 4 = failed at payment insertion
                 if( failedCode == 1)
                 {
@@ -468,20 +469,19 @@ public class UPMigrationService {
                 }
                 
                 
-                if(numOfErrors.get() == 1)
-                {
-                	excelService.createFailedRecordsFile();
-                }
+				/*
+				 * if(numOfErrors.get() == 1) { excelService.createFailedRecordsFile(); }
+				 * 
+				 * excelService.writeFailedRecords(legacyRow);
+				 */
                 
-                excelService.writeFailedRecords(legacyRow);
                 
-                
-                log.error("Row[{}] - [{}] , errorMessage: {}", row.getRowIndex(), legacyRow.toString(), e.getMessage());
+                log.info("Row[{}] - [{}] , errorMessage: {}", row.getRowIndex(), legacyRow.toString(), e.getMessage());
             }
             return true;
         });
-        log.info("Import Completed - Success={} Errors={}", numOfSuccess, numOfErrors);
-        excelService.writeToFileandClose();
+        log.info("Import Completed - Success={} Errors={} SkippedRows={}", numOfSuccess, numOfErrors,skippedRows);
+//        excelService.writeToFileandClose();
       
     }
     
@@ -494,7 +494,17 @@ public class UPMigrationService {
         return "5" + curPtin;
     }
     
-
+    private String convertPtUniqueIdToMobileNumber(String ptUniqueId) {
+    	String ptUId = ptUniqueId;
+    	if(ptUId.length()>=17)
+    		return ptUId.substring(6, 16);
+    	else {
+    		 while (ptUId.length() < 9) {
+    			 ptUId = "0" + ptUId;
+    	        }
+    		 return "5" + ptUId;
+    	}
+    }
  
     public void importPropertiesParallel(InputStream file, InputStream matchedFile, Long skip, Long limit) throws Exception {
 
