@@ -129,7 +129,8 @@ public class PropertyQueryBuilder {
 					&& CommonUtils.isNullOrEmptyString(criteria.getMobileNumber())
 					&& CommonUtils.isNullOrEmptyString(criteria.getDoorno())//Added this
 					&& CommonUtils.isNullOrEmptyString(criteria.getStreet())//Added this
-					&& CommonUtils.isNullOrEmptyString(criteria.getName());//Added this
+					&& CommonUtils.isNullOrEmptyString(criteria.getName())//Added this
+					&& CollectionUtils.isEmpty(criteria.getPtmsPropertyIds());//Added this
 		if(isEmpty)
 			throw new CustomException("EG_PT_SEARCH_ERROR"," No criteria given for the property search");
 		
@@ -209,6 +210,16 @@ public class PropertyQueryBuilder {
 				builder.append(AND_QUERY);
 			builder.append("property.acknowldgementnumber IN (").append(createQuery(acknowledgementIds)).append(")");
 			addToPreparedStatementWithUpperCase(preparedStmtList, acknowledgementIds);
+			appendAndQuery= true;
+		}
+		
+		Set<String> ptmsProperyIds = criteria.getPtmsPropertyIds();
+		if (!CollectionUtils.isEmpty(ptmsProperyIds)) {
+
+			if(appendAndQuery)
+				builder.append(AND_QUERY);
+			builder.append("property.property_id_ptms IN (").append(createQuery(ptmsProperyIds)).append(")");
+			addToPreparedStatementWithUpperCase(preparedStmtList, ptmsProperyIds);
 			appendAndQuery= true;
 		}
 		
