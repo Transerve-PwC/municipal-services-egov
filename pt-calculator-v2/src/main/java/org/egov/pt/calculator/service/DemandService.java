@@ -72,6 +72,11 @@ public class DemandService {
 
 	@Autowired
     private PaymentService paymentService;
+	
+	@Autowired
+	private EnrichmentService enrichmentService;
+	
+	
 
 	/**
 	 * Generates and persists the demand to billing service for the given property
@@ -117,6 +122,95 @@ public class DemandService {
 			BigDecimal carryForwardCollectedAmount = getCarryForwardAndCancelOldDemand(newTax, criteria,
 					request.getRequestInfo(),oldDemand, true);
 
+			if (carryForwardCollectedAmount.doubleValue() >= 0.0) {
+
+				Demand demand = prepareDemand(property, calculation ,oldDemand);
+
+				// Add billingSLabs in demand additionalDetails as map with key calculationDescription
+				demand.setAdditionalDetails(Collections.singletonMap(BILLINGSLAB_KEY, calculation.getBillingSlabIds()));
+
+				demands.add(demand);
+				consumerCodeFinYearMap.put(demand.getConsumerCode(), detail.getFinancialYear());
+
+			}else {
+				lesserAssessments.add(assessmentNumber);
+			}
+		}
+		
+		if (!CollectionUtils.isEmpty(lesserAssessments)) {
+			throw new CustomException(CalculatorConstants.EG_PT_DEPRECIATING_ASSESSMENT_ERROR,
+					CalculatorConstants.EG_PT_DEPRECIATING_ASSESSMENT_ERROR_MSG + lesserAssessments);
+		}
+		
+		DemandRequest dmReq = DemandRequest.builder().demands(demands).requestInfo(request.getRequestInfo()).build();
+		String url = new StringBuilder().append(configs.getBillingServiceHost())
+				.append(configs.getDemandCreateEndPoint()).toString();
+		DemandResponse res = new DemandResponse();
+
+		try {
+			res = restTemplate.postForObject(url, dmReq, DemandResponse.class);
+
+		} catch (HttpClientErrorException e) {
+			throw new ServiceCallException(e.getResponseBodyAsString());
+		}
+		log.info(" The demand Response is : " + res);
+	//	assessmentService.saveAssessments(res.getDemands(), consumerCodeFinYearMap, request.getRequestInfo());
+		return propertyCalculationMap;
+	}
+	
+	
+	
+	/**
+	 * Generates and persists the demand to billing service for the given property
+	 * 
+	 * if the property has been assessed already for the given financial year then
+	 * 
+	 * it carry forwards the old collection amount to the new demand as advance
+	 * 
+	 * @param request
+	 * @return
+	 */
+	public Map<String, Calculation> generateDemandsWithoutCalculation(CalculationReq request) {
+
+		List<CalculationCriteria> criterias = request.getCalculationCriteria();
+		List<Demand> demands = new ArrayList<>();
+		List<String> lesserAssessments = new ArrayList<>();
+		Map<String, String> consumerCodeFinYearMap = new HashMap<>();
+		Map<String,Object> masterMap = mDataService.getMasterMap(request);
+		
+//		Map<String, Calculation> propertyCalculationMap = estimationService.getEstimationPropertyMap(request,masterMap);
+		Map<String, Calculation> propertyCalculationMap =  new HashMap<>();
+		for (CalculationCriteria criteria : criterias) {
+
+			Property property = criteria.getProperty();
+
+			PropertyDetail detail = property.getPropertyDetails().get(0);
+
+			enrichmentService.enrichDemandPeriod(criteria,detail.getFinancialYear(),masterMap);
+			
+			Calculation calculation = estimationService.fetchCalculationFromProperty(criteria,property);
+			
+			
+			String assessmentNumber = detail.getAssessmentNumber();
+			propertyCalculationMap.put(assessmentNumber, calculation);
+			// pt_tax for the new assessment
+			BigDecimal newTax =  BigDecimal.ZERO;
+			Optional<TaxHeadEstimate> advanceCarryforwardEstimate = calculation.getTaxHeadEstimates()
+			.stream().filter(estimate -> estimate.getTaxHeadCode().equalsIgnoreCase(CalculatorConstants.PT_TAX))
+				.findAny();
+			if(advanceCarryforwardEstimate.isPresent())
+				newTax = advanceCarryforwardEstimate.get().getEstimateAmount();
+			
+			Demand oldDemand = null;
+	
+			 oldDemand = utils.getLatestDemandForCurrentFinancialYear(request.getRequestInfo(),criteria);
+
+			// true represents that the demand should be updated from this call
+			 BigDecimal carryForwardCollectedAmount = null;
+//			if(oldDemand!=null) {
+			  carryForwardCollectedAmount = getCarryForwardAndCancelOldDemand(newTax, criteria,
+					request.getRequestInfo(),oldDemand, true);
+//			}
 			if (carryForwardCollectedAmount.doubleValue() >= 0.0) {
 
 				Demand demand = prepareDemand(property, calculation ,oldDemand);

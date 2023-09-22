@@ -43,9 +43,14 @@ public class CalculatorController {
 		return new ResponseEntity<>(calculatorService.getTaxCalculation(calculationReq), HttpStatus.OK);
 	}
 
+//	@PostMapping("/_calculate")
+//	public ResponseEntity<Map<String, Calculation>> generateDemands(@RequestBody @Valid CalculationReq calculationReq) {
+//		return new ResponseEntity<>(calculatorService.calculateAndCreateDemand(calculationReq), HttpStatus.OK);
+//	}
+	
 	@PostMapping("/_calculate")
 	public ResponseEntity<Map<String, Calculation>> generateDemands(@RequestBody @Valid CalculationReq calculationReq) {
-		return new ResponseEntity<>(calculatorService.calculateAndCreateDemand(calculationReq), HttpStatus.OK);
+		return new ResponseEntity<>(calculatorService.CreateDemandWithoutCalculation(calculationReq), HttpStatus.OK);
 	}
 	
 	@PostMapping("/_getbill")

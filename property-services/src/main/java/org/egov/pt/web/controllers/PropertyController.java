@@ -1,5 +1,6 @@
 package org.egov.pt.web.controllers;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -14,6 +15,7 @@ import org.egov.pt.models.Property;
 import org.egov.pt.models.PropertyCriteria;
 import org.egov.pt.models.oldProperty.OldPropertyCriteria;
 import org.egov.pt.service.BoundaryJsonGenerationService;
+import org.egov.pt.service.JsonMigration;
 import org.egov.pt.service.MigrationService;
 import org.egov.pt.service.PropertyService;
 import org.egov.pt.service.UPMigrationService;
@@ -33,6 +35,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -45,6 +49,9 @@ public class PropertyController {
 
 	@Autowired
 	private PropertyService propertyService;
+	
+	@Autowired
+	private JsonMigration jsonMigration;
 
 	@Autowired
 	private UPMigrationService upMigrationService;
@@ -63,7 +70,6 @@ public class PropertyController {
 	
 	@Autowired
 	private BoundaryJsonGenerationService boundaryJson ;
-	
 
 	@PostMapping("/_create")
 	public ResponseEntity<PropertyResponse> create(@Valid @RequestBody PropertyRequest propertyRequest) {
@@ -203,6 +209,15 @@ public class PropertyController {
 		System.out.println("Elapsed time--->" + elapsetime);
 
 		return new ResponseEntity<>(jsonOutput, HttpStatus.OK);
+	}
+	
+	@PostMapping("/_ptmsJsonMigration")
+	public ResponseEntity<?> ptmsA(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper ,@RequestParam("ward") String ward) throws JsonParseException, JsonMappingException, IOException {
+		
+		List<Property> ptmsA = jsonMigration.PtmsJsonMigration(requestInfoWrapper.getRequestInfo() ,ward);
+		
+		String msg ="Done" ;
+		return new ResponseEntity<>(ptmsA, HttpStatus.OK);
 	}
 	
 }

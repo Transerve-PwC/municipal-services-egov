@@ -78,6 +78,15 @@ public class PropertyV2 extends PropertyInfoV2 {
 	@JsonProperty("auditDetails")
 	private AuditDetails auditDetails;
 
+	@JsonProperty("waterTax")
+	private BigDecimal waterTax;
+	
+	@JsonProperty("houseTax")
+	private BigDecimal houseTax;
+	
+	
+	@JsonProperty("sewerTax")
+	private BigDecimal sewerTax;
 
 
 	@Builder
@@ -86,7 +95,7 @@ public class PropertyV2 extends PropertyInfoV2 {
 					  String propertyType, String ownershipCategory, List<OwnerInfo> owners, InstitutionV2 institutionV2,
 					  String creationReason, String usageCategory, Long noOfFloors, Double landArea,
 					  BigDecimal superBuiltUpArea, String source, String channel, List<DocumentV2> documentV2s, List<UnitV2> units,
-					  Object additionalDetails, AuditDetails auditDetails) {
+					  Object additionalDetails, AuditDetails auditDetails, BigDecimal waterTax, BigDecimal sewerTax ,BigDecimal houseTax) {
 		super(id, propertyId, surveyId, linkedProperties, tenantId, accountId, oldPropertyId, status, addressV2);
 		this.acknowldgementNumber = acknowldgementNumber;
 		this.propertyType = propertyType;
@@ -104,6 +113,9 @@ public class PropertyV2 extends PropertyInfoV2 {
 		this.units = units;
 		this.additionalDetails = additionalDetails;
 		this.auditDetails = auditDetails;
+		this.waterTax = waterTax;
+		this.houseTax = houseTax;
+		this.sewerTax = sewerTax;
 	}
 
 	public PropertyV2 addOwnersItem(OwnerInfo ownersItem) {

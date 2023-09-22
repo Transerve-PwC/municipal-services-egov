@@ -30,6 +30,13 @@ public class Property {
     private Long createdtime;
     private Long lastmodifiedtime;
     private String constructionyear;
+    
+    private BigDecimal houseTax;
+    private BigDecimal sewerTax;
+    private BigDecimal waterTax;
+    
+    @Column(name="property_id_ptms")
+    private String propertyIDPTMS;
 
     public String getConstructionyear() {
         return constructionyear;
@@ -214,5 +221,37 @@ public class Property {
     public void setLastmodifiedtime(Long lastmodifiedtime) {
         this.lastmodifiedtime = lastmodifiedtime;
     }
+
+	public BigDecimal getHouseTax() {
+		return houseTax;
+	}
+
+	public void setHouseTax(BigDecimal houseTax) {
+		this.houseTax = houseTax;
+	}
+
+	public BigDecimal getSewerTax() {
+		return sewerTax;
+	}
+
+	public void setSewerTax(BigDecimal sewerTax) {
+		this.sewerTax = sewerTax;
+	}
+
+	public BigDecimal getWaterTax() {
+		return waterTax;
+	}
+
+	public void setWaterTax(BigDecimal waterTax) {
+		this.waterTax = waterTax;
+	}
+
+	public String getPropertyIDPTMS() {
+		return propertyIDPTMS;
+	}
+
+	public void setPropertyIDPTMS(String propertyIDPTMS) {
+		this.propertyIDPTMS = propertyIDPTMS;
+	}
 
 }

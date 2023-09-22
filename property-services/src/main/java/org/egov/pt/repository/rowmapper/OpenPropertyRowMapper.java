@@ -49,6 +49,9 @@ public class OpenPropertyRowMapper implements ResultSetExtractor<List<Property>>
 						.tenantId(tenanId)
 						.id(propertyUuId)
 						.address(address)
+						.houseTax(rs.getBigDecimal("house_tax"))
+						.waterTax(rs.getBigDecimal("water_tax"))
+						.sewerTax(rs.getBigDecimal("sewer_tax"))
 						.build();
 
 				

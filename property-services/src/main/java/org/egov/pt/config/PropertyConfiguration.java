@@ -356,4 +356,7 @@ public class PropertyConfiguration {
     @Value("${egov.calculation.estimate.host}")
     private String estimatationHost;
     
+    @Value("${egov.ptms.data.migration.file}")
+    private String PtmsDataMigrationFile;
+    
 }

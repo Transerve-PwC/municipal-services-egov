@@ -86,6 +86,8 @@ public class LegacyRow {
 	private String totalCarpetArea;
 	@CellAnnotation(index = 31)
 	private String constructionYear;
+	@CellAnnotation(index = 32)
+	private String ptmsPropertyId;
 
 }
 
