@@ -49,4 +49,6 @@ public class PropertyCriteria {
 	
 	private String street ;
 	
+	private Set<String> ptmsPropertyIds; 
+	
 }
