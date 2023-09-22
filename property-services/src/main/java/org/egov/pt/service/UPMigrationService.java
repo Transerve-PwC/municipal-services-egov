@@ -1,6 +1,7 @@
 package org.egov.pt.service;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
@@ -102,7 +103,7 @@ public class UPMigrationService {
         userRequest.setActive(true);
         userRequest.setMobileNumber((legacyRow.getMobile() != null && legacyRow.getMobile() != ""
                 && (new BigDecimal(legacyRow.getMobile()).longValue() != 0)) ? legacyRow.getMobile()
-                        : convertPTINToMobileNumber("5" + legacyRow.getPTIN()));
+                        : convertPtUniqueIdToMobileNumber(legacyRow.getPtmsPropertyId()));
         userRequest.setUserName(userRequest.getMobileNumber());
         userRequest.setPassword("123456");
         userRequest.setFatherOrHusbandName(legacyRow.getFHName() != null && legacyRow.getFHName().length() > 100
@@ -181,6 +182,7 @@ public class UPMigrationService {
 
         AtomicInteger numOfSuccess = new AtomicInteger();
         AtomicInteger numOfErrors = new AtomicInteger();
+        Set<Integer> skippedRows = new HashSet<>();
         
         Set<String> duplicateMobileNumbers = new HashSet<>();
         HashMap<String, User>  existingUser = new HashMap<String, User>();
@@ -297,7 +299,7 @@ public class UPMigrationService {
                 property.setNooffloors(1L);
                 property.setLandarea(BigDecimal
                         .valueOf(Double.valueOf(legacyRow.getPlotArea() != null && !legacyRow.getPlotArea().isEmpty() ? legacyRow.getPlotArea() : "0")));
-                property.setOldpropertyid(legacyRow.getPTIN());
+                property.setOldpropertyid(legacyRow.getPTIN().matches("nomatch|null")?null:legacyRow.getPTIN().toString());
                 property.setSource("DATA_MIGRATION");
                 property.setChannel(Channel.MIGRATION.toString());
                 property.setConstructionyear(legacyRow.getConstructionYear());
@@ -305,6 +307,15 @@ public class UPMigrationService {
                 property.setLastmodifiedby(user.getUuid());
                 property.setCreatedtime(new Date().getTime());
                 property.setLastmodifiedtime(new Date().getTime());
+                property.setHouseTax(BigDecimal
+                        .valueOf(Double.valueOf(legacyRow.getHouseTax()!= null && !legacyRow.getHouseTax().isEmpty() ? legacyRow.getHouseTax() : "0")));
+                property.setWaterTax(BigDecimal
+                		.valueOf(Double.valueOf(legacyRow.getWaterTax()!= null && !legacyRow.getWaterTax().isEmpty() ? legacyRow.getWaterTax() : "0")));
+                property.setSewerTax(BigDecimal
+                		.valueOf(Double.valueOf(legacyRow.getSewerTax()!= null && !legacyRow.getSewerTax().isEmpty() ? legacyRow.getSewerTax() : "0")));
+               
+                property.setPropertyIDPTMS(legacyRow.getPtmsPropertyId());
+                
                 propertyExcelRepository.save(property);
                 failedCode = 1;
 
@@ -435,6 +446,7 @@ public class UPMigrationService {
                 numOfSuccess.getAndIncrement();
             } catch (Exception e) {
                 numOfErrors.getAndIncrement();
+                skippedRows.add(row.getRowIndex());
 //FaieldCodes 1 = failed at owner insertion , 2 = failed at unit insertion , 3 = failed at address insertion , 4 = failed at payment insertion
                 if( failedCode == 1)
                 {
@@ -457,20 +469,19 @@ public class UPMigrationService {
                 }
                 
                 
-                if(numOfErrors.get() == 1)
-                {
-                	excelService.createFailedRecordsFile();
-                }
+				/*
+				 * if(numOfErrors.get() == 1) { excelService.createFailedRecordsFile(); }
+				 * 
+				 * excelService.writeFailedRecords(legacyRow);
+				 */
                 
-                excelService.writeFailedRecords(legacyRow);
                 
-                
-                log.error("Row[{}] - [{}] , errorMessage: {}", row.getRowIndex(), legacyRow.toString(), e.getMessage());
+                log.info("Row[{}] - [{}] , errorMessage: {}", row.getRowIndex(), legacyRow.toString(), e.getMessage());
             }
             return true;
         });
-        log.info("Import Completed - Success={} Errors={}", numOfSuccess, numOfErrors);
-        excelService.writeToFileandClose();
+        log.info("Import Completed - Success={} Errors={} SkippedRows={}", numOfSuccess, numOfErrors,skippedRows);
+//        excelService.writeToFileandClose();
       
     }
     
@@ -483,7 +494,17 @@ public class UPMigrationService {
         return "5" + curPtin;
     }
     
-
+    private String convertPtUniqueIdToMobileNumber(String ptUniqueId) {
+    	String ptUId = ptUniqueId;
+    	if(ptUId.length()>=17)
+    		return ptUId.substring(6, 16);
+    	else {
+    		 while (ptUId.length() < 9) {
+    			 ptUId = "0" + ptUId;
+    	        }
+    		 return "5" + ptUId;
+    	}
+    }
  
     public void importPropertiesParallel(InputStream file, InputStream matchedFile, Long skip, Long limit) throws Exception {
 
@@ -503,6 +524,7 @@ public class UPMigrationService {
       Set<String> duplicateMobileNumbers = new HashSet<>();
       HashMap<String, User>  existingUser = new HashMap<String, User>();
       final ClassLoader loader = PropertyController.class.getClassLoader();
+	System.out.println("*********************************migrationFileName:"+config.getMigrationFileName());
 
       final InputStream excelFile = loader.getResourceAsStream(config.getMigrationFileName());
 
@@ -541,10 +563,25 @@ public class UPMigrationService {
       log.info("  existingUsers size {}",existingUser.size());
       
       existingUser.forEach((key, value) -> {log.info("Key: {}",  key );});
+System.out.println("creating failed file from method importParallel");
       excelService.createFailedRecordsFile();
+ System.out.println("checking availability of created fail file from method importParallel");
+      File f = new File(config.getFailedRecordsMigrationFilePath());
+System.out.println("path of file created:"+f.getPath());
+System.out.println("getAbsolutePath:"+f.getAbsolutePath());
+      System.out.println("getCanonicalPath:"+f.getCanonicalPath());
+      System.out.println("listFiles:"+f.listFiles());
+      System.out.println("toPath:"+f.toPath());
+      System.out.println("toURI:"+f.toURI());
+      System.out.println("toURL:"+f.toURL());
+System.out.println("listRootsLength:"+File.listRoots().length);
+      System.out.println("listRoots:"+File.listRoots()[0].getAbsolutePath());
+      if(!f.exists())
+    	  System.out.println("fail file not found");
+      else
+    	  System.out.println("fail file found");
       int cores = Runtime.getRuntime().availableProcessors();
       ExecutorService executorService = Executors.newFixedThreadPool(cores);
-      
       excelService.read(file, skip, limit, (RowExcel row) -> {
     	  
     	  executorService.submit(() -> { 
