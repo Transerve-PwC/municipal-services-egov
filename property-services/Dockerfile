@@ -3,7 +3,7 @@ FROM egovio/apline-jre:8u121
 # INSTRUCTIONS ON HOW TO BUILD JAR:
 # Move to the location where pom.xml is exist in project and build project using below command
 # "mvn clean package"
-COPY /target/property-services-1.1.1-SNAPSHOT.jar /opt/egov/property-services.jar
+COPY /target/property-services-1.1.1-SNAPSHOT.jar /opt/egov/pt-services-v2.jar
 
 COPY start.sh /usr/bin/start.sh
 
