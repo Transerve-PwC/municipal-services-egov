@@ -196,4 +196,18 @@ public class PropertyRepository {
 		return false;
 	}
 
+	public List<String> getPtmsIds() {
+		List<Object> preparedStmtList = new ArrayList<>();
+		String basequery = "select property_id_ptms from eg_pt_property";
+		StringBuilder builder = new StringBuilder(basequery);
+		/*
+		 * if (!ObjectUtils.isEmpty(criteria.getTenantId())) {
+		 * builder.append(" where tenantid=?");
+		 * preparedStmtList.add(criteria.getTenantId()); }
+		 */
+		return jdbcTemplate.query(builder.toString(), preparedStmtList.toArray(), new SingleColumnRowMapper<>(String.class));
+	
+		
+	}
+
 }
