@@ -26,7 +26,7 @@ public class LegacyExcelRowMapper {
 			CellReplaceAnnotation replaceAnnotation = f.getAnnotation(CellReplaceAnnotation.class);
 			Cell cell  = cells.get(column.index());
 			//For Mobile number and PTIN
-			if(f.getName().equalsIgnoreCase("PTIN")||f.getName().equalsIgnoreCase("Mobile")) {
+			if(f.getName().equalsIgnoreCase("PTIN")||f.getName().equalsIgnoreCase("Mobile")||f.getName().equalsIgnoreCase("ConstructionYear")) {
 				String value = cell.getStringCellValue();
 				if(replaceAnnotation != null) value = value.replaceAll(replaceAnnotation.target(),replaceAnnotation.source());
 				PropertyUtils.setProperty(row, f.getName(), value);
