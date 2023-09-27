@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -21,6 +22,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.pt.config.PropertyConfiguration;
 import org.egov.pt.models.OwnerInfo;
+import org.egov.pt.models.PropertyCriteria;
 import org.egov.pt.models.enums.Channel;
 import org.egov.pt.models.enums.Status;
 import org.egov.pt.models.excel.Address;
@@ -35,6 +37,7 @@ import org.egov.pt.repository.AddressExcelRepository;
 import org.egov.pt.repository.OwnerExcelRepository;
 import org.egov.pt.repository.PropertyExcelRepository;
 import org.egov.pt.repository.PropertyPaymentExcelRepository;
+import org.egov.pt.repository.PropertyRepository;
 import org.egov.pt.repository.ServiceRequestRepository;
 import org.egov.pt.repository.UnitExcelRepository;
 import org.egov.pt.repository.rowmapper.LegacyExcelRowMapper;
@@ -86,12 +89,9 @@ public class UPMigrationService {
     
     @Autowired
     private Cachebaleservice cachebaleservice ;
-
     
-
-   
-    
-
+    @Autowired
+    private PropertyRepository propertyRepository;
    
 
     private static final RequestInfo userCreateRequestInfo = RequestInfo.builder().action("_create").apiId("Rainmaker")
@@ -189,12 +189,16 @@ public class UPMigrationService {
         final ClassLoader loader = PropertyController.class.getClassLoader();
 
         final InputStream excelFile = loader.getResourceAsStream(config.getMigrationFileName());
-
+        
+        List<String> PTMSUIdList = fetchPtmsUidFromDB();
         excelService.read(excelFile, skip, limit, (RowExcel row) -> {
         	 LegacyRow legacyRow = null;
              
         	 try {
         		 legacyRow = legacyExcelRowMapper.map(row);
+        		 if(PTMSUIdList.contains(legacyRow.getPtmsPropertyId())) {
+        			 return true;
+        		 }
 
         		 String name = legacyRow.getOwnerName() != null && legacyRow.getOwnerName() != "" ? legacyRow.getOwnerName()
         				 : "Owner of " + legacyRow.getPTIN();
@@ -234,6 +238,14 @@ public class UPMigrationService {
             PropertyPayment payment = new PropertyPayment();
             try {
                 legacyRow = legacyExcelRowMapper.map(row);
+                
+                if(PTMSUIdList.contains(legacyRow.getPtmsPropertyId())) {
+                	log.info("property with PTMS unique ID {} is already present",legacyRow.getPtmsPropertyId());
+                	numOfErrors.getAndIncrement();
+                    skippedRows.add(row.getRowIndex());
+                	return true;
+       		 	}
+                
                 String tenantId = "up." + legacyRow.getULBName().toLowerCase();
                 checkIfSaharanpurAndHandleExponentialMobile(tenantId, legacyRow);
 
@@ -486,7 +498,21 @@ public class UPMigrationService {
     }
     
  
-    private String convertPTINToMobileNumber(String ptin) {
+    private List<String> fetchPtmsUidFromDB() {
+		/*
+		 * PropertyCriteria criteria =new PropertyCriteria().builder().build(); if
+		 * (criteria.getLimit() != null && criteria.getLimit() >
+		 * config.getMaxSearchLimit()) criteria.setLimit(config.getMaxSearchLimit()); if
+		 * (criteria.getLimit() == null) criteria.setLimit(config.getDefaultLimit()); if
+		 * (criteria.getOffset() == null) criteria.setOffset(config.getDefaultOffset());
+		 */
+    	List<String>ptmsIds=propertyRepository.getPtmsIds();
+    	
+    	System.out.println("FFFFFFFLLL::"+ptmsIds.size()+ptmsIds.get(0));
+		return ptmsIds;
+	}
+
+	private String convertPTINToMobileNumber(String ptin) {
         String curPtin = ptin;
         while (curPtin.length() < 9) {
             curPtin = "0" + curPtin;

@@ -40,7 +40,7 @@ public class PropertyQueryBuilder {
 	 // Select query
 	
 	private static String propertySelectValues = "property.id as pid, property.propertyid, property.tenantid as ptenantid, surveyid, accountid, oldpropertyid, property.status as propertystatus, acknowldgementnumber, propertytype, ownershipcategory,property.usagecategory as pusagecategory, creationreason, nooffloors, landarea, property.superbuiltuparea as propertysbpa, linkedproperties, source, channel, property.createdby as pcreatedby, property.lastmodifiedby as plastmodifiedby, property.createdtime as pcreatedtime,"
-			+ " property.lastmodifiedtime as plastmodifiedtime, property.additionaldetails as padditionaldetails, (CASE WHEN property.status='ACTIVE' then 0 WHEN property.status='INWORKFLOW' then 1 WHEN property.status='INACTIVE' then 2 ELSE 3 END) as statusorder,constructionyear, roadwidth ,water_tax ,house_tax ,sewer_tax , ";
+			+ " property.lastmodifiedtime as plastmodifiedtime, property.additionaldetails as padditionaldetails, (CASE WHEN property.status='ACTIVE' then 0 WHEN property.status='INWORKFLOW' then 1 WHEN property.status='INACTIVE' then 2 ELSE 3 END) as statusorder,constructionyear, roadwidth ,water_tax ,house_tax ,sewer_tax ,property_id_ptms, ";
 
 	private static String addressSelectValues = "address.tenantid as adresstenantid, address.id as addressid, address.propertyid as addresspid, latitude, longitude, doorno, plotno, buildingname, street, landmark, city, pincode, locality, district, region, state, country, address.createdby as addresscreatedby, address.lastmodifiedby as addresslastmodifiedby, address.createdtime as addresscreatedtime, address.lastmodifiedtime as addresslastmodifiedtime, address.additionaldetails as addressadditionaldetails,wardno, zone, " ;
 
@@ -129,7 +129,8 @@ public class PropertyQueryBuilder {
 					&& CommonUtils.isNullOrEmptyString(criteria.getMobileNumber())
 					&& CommonUtils.isNullOrEmptyString(criteria.getDoorno())//Added this
 					&& CommonUtils.isNullOrEmptyString(criteria.getStreet())//Added this
-					&& CommonUtils.isNullOrEmptyString(criteria.getName());//Added this
+					&& CommonUtils.isNullOrEmptyString(criteria.getName())//Added this
+					&& CollectionUtils.isEmpty(criteria.getPtmsPropertyIds());//Added this
 		if(isEmpty)
 			throw new CustomException("EG_PT_SEARCH_ERROR"," No criteria given for the property search");
 		
@@ -209,6 +210,16 @@ public class PropertyQueryBuilder {
 				builder.append(AND_QUERY);
 			builder.append("property.acknowldgementnumber IN (").append(createQuery(acknowledgementIds)).append(")");
 			addToPreparedStatementWithUpperCase(preparedStmtList, acknowledgementIds);
+			appendAndQuery= true;
+		}
+		
+		Set<String> ptmsProperyIds = criteria.getPtmsPropertyIds();
+		if (!CollectionUtils.isEmpty(ptmsProperyIds)) {
+
+			if(appendAndQuery)
+				builder.append(AND_QUERY);
+			builder.append("property.property_id_ptms IN (").append(createQuery(ptmsProperyIds)).append(")");
+			addToPreparedStatementWithUpperCase(preparedStmtList, ptmsProperyIds);
 			appendAndQuery= true;
 		}
 		

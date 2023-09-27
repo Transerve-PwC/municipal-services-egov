@@ -52,6 +52,7 @@ public class OpenPropertyRowMapper implements ResultSetExtractor<List<Property>>
 						.houseTax(rs.getBigDecimal("house_tax"))
 						.waterTax(rs.getBigDecimal("water_tax"))
 						.sewerTax(rs.getBigDecimal("sewer_tax"))
+						.propertyIDPTMS(rs.getString("property_id_ptms"))
 						.build();
 
 				
