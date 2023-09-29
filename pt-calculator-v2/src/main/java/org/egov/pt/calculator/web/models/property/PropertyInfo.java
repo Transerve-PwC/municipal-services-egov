@@ -34,6 +34,12 @@ public class PropertyInfo   {
     @JsonProperty("oldPropertyId")
     @Pattern(regexp = "^[^\\$\"'<>?\\\\~`!@$%^+={}*,.:;“”‘’]*$", message = "Invalid existing property Id. should be AlphaNumeric with -, /, #, : special characters allowed")
     public String oldPropertyId;
+    
+    
+    @JsonProperty("ptmsPropertyId")
+    public String ptmsPropertyId;
+    
+    
 
               /**
    * status of the Property
@@ -75,13 +81,14 @@ public class PropertyInfo   {
 
 
 
-    protected PropertyInfo(String propertyId, String tenantId, String acknowldgementNumber, String oldPropertyId, StatusEnum status, Address address) {
+    protected PropertyInfo(String propertyId, String tenantId, String acknowldgementNumber, String oldPropertyId, StatusEnum status, Address address,String ptmsPropertyId) {
         this.propertyId = propertyId;
         this.tenantId = tenantId;
         this.acknowldgementNumber = acknowldgementNumber;
         this.oldPropertyId = oldPropertyId;
         this.status = status;
         this.address = address;
+        this.ptmsPropertyId = ptmsPropertyId;
     }
 }
 

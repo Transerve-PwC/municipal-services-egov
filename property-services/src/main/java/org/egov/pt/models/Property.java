@@ -112,7 +112,7 @@ public class Property extends PropertyInfo {
      private BigDecimal sewerTax;
      
      @JsonProperty("ptmsPropertyId")
-     private String propertyIDPTMS;
+     private String ptmsPropertyId;
 	
 	
 	
@@ -123,7 +123,7 @@ public class Property extends PropertyInfo {
 			CreationReason creationReason, String usageCategory, Long noOfFloors, Double landArea,
 			BigDecimal superBuiltUpArea, Source source, Channel channel, List<Document> documents, List<Unit> units,
 			JsonNode additionalDetails, AuditDetails auditDetails, ProcessInstance workflow , String roadWidth , String constructionYear,
-			BigDecimal waterTax, BigDecimal houseTax, BigDecimal sewerTax,String propertyIDPTMS) {
+			BigDecimal waterTax, BigDecimal houseTax, BigDecimal sewerTax,String ptmsPropertyId) {
 		super(id, propertyId, surveyId, linkedProperties, tenantId, accountId, oldPropertyId, status, address);
 		this.acknowldgementNumber = acknowldgementNumber;
 		this.propertyType = propertyType;
@@ -147,7 +147,7 @@ public class Property extends PropertyInfo {
 		this.houseTax  = houseTax;
 		this.waterTax = waterTax;
 		this.sewerTax = sewerTax;
-		this.propertyIDPTMS=propertyIDPTMS;
+		this.ptmsPropertyId=ptmsPropertyId;
 	}
 
 	public Property addOwnersItem(OwnerInfo ownersItem) {

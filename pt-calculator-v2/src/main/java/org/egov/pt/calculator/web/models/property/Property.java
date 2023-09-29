@@ -109,6 +109,7 @@ public class Property extends PropertyInfo{
 		@NotNull
 		@Valid
 		private Address address;
+		public String ptmsPropertyId;
 
 
 
@@ -161,6 +162,11 @@ public class Property extends PropertyInfo{
 			this.address = address;
 			return this;
 		}
+		
+		public PropertyBuilder ptmsPropertyId(String ptmsPropertyId){
+			this.ptmsPropertyId =ptmsPropertyId ;
+			return this;
+		}
 
 		public Property build(){
 			return new Property(this);
@@ -171,11 +177,12 @@ public class Property extends PropertyInfo{
 
 
 	public Property(PropertyBuilder builder) {
-		super(builder.propertyId,builder.tenantId,builder.acknowldgementNumber,builder.oldPropertyId,builder.status,builder.address);
+		super(builder.propertyId,builder.tenantId,builder.acknowldgementNumber,builder.oldPropertyId,builder.status,builder.address,builder.ptmsPropertyId);
 		this.auditDetails = builder.auditDetails;
 		this.creationReason = builder.creationReason;
 		this.occupancyDate = builder.occupancyDate;
 		this.propertyDetails = builder.propertyDetails;
+		this.ptmsPropertyId = builder.ptmsPropertyId;
 
 	}
 }
