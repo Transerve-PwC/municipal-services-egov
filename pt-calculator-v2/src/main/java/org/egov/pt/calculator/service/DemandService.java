@@ -473,8 +473,8 @@ public class DemandService {
 		String tenantId = property.getTenantId();
 		PropertyDetail detail = property.getPropertyDetails().get(0);
 		String propertyType = detail.getPropertyType();
-//		String consumerCode = property.getPropertyId();
-		String consumerCode = (property.getPtmsPropertyId()!=null && !property.getPtmsPropertyId().isEmpty())?property.getPtmsPropertyId():property.getPropertyId();
+		String consumerCode = property.getPropertyId();
+//		String consumerCode = (property.getPtmsPropertyId()!=null && !property.getPtmsPropertyId().isEmpty())?property.getPtmsPropertyId():property.getPropertyId();
 
 		OwnerInfo owner = null;
 

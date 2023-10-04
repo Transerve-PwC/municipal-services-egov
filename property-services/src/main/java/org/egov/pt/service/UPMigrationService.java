@@ -289,14 +289,14 @@ public class UPMigrationService {
                 }
 
                 // Generate unique property id and acknowledgement no
-                String pId = propertyutil.getIdList(requestinfo, tenantId, config.getPropertyIdGenName(),
-                        config.getPropertyIdGenFormat(), 1).get(0);
+//                String pId = propertyutil.getIdList(requestinfo, tenantId, config.getPropertyIdGenName(),
+//                        config.getPropertyIdGenFormat(), 1).get(0);
                 String ackNo = propertyutil
                         .getIdList(requestinfo, tenantId, config.getAckIdGenName(), config.getAckIdGenFormat(), 1)
                         .get(0);
               
                 property.setId(UUID.randomUUID().toString());
-                property.setPropertyid(pId);
+                property.setPropertyid(legacyRow.getPtmsPropertyId());
                 property.setTenantid(tenantId);
                 property.setAccountid(user.getUuid());
                 property.setStatus(config.getWfStatusActive());
@@ -499,16 +499,8 @@ public class UPMigrationService {
     
  
     private List<String> fetchPtmsUidFromDB() {
-		/*
-		 * PropertyCriteria criteria =new PropertyCriteria().builder().build(); if
-		 * (criteria.getLimit() != null && criteria.getLimit() >
-		 * config.getMaxSearchLimit()) criteria.setLimit(config.getMaxSearchLimit()); if
-		 * (criteria.getLimit() == null) criteria.setLimit(config.getDefaultLimit()); if
-		 * (criteria.getOffset() == null) criteria.setOffset(config.getDefaultOffset());
-		 */
     	List<String>ptmsIds=propertyRepository.getPtmsIds();
     	
-    	System.out.println("FFFFFFFLLL::"+ptmsIds.size()+ptmsIds.get(0));
 		return ptmsIds;
 	}
 
