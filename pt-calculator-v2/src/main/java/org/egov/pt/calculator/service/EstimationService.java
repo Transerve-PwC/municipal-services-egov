@@ -189,25 +189,29 @@ public class EstimationService {
 		TaxHeadEstimate waterEstimate = new TaxHeadEstimate();
 		waterEstimate.setTaxHeadCode(WATER_TAXHEAD);
 		waterEstimate.setCategory(Category.TAX);
-		waterEstimate.setEstimateAmount(detail.getWaterTax());
-		taxAmt=taxAmt.add(detail.getWaterTax());
+		BigDecimal waterTax = detail.getWaterTax().setScale(0, BigDecimal.ROUND_HALF_DOWN);
+		waterEstimate.setEstimateAmount(waterTax);
+		taxAmt=taxAmt.add(waterTax);
 		taxHeadEstimates.add(waterEstimate);
 		
 		//house tax
 		TaxHeadEstimate houseEstimate = new TaxHeadEstimate();
 		houseEstimate.setTaxHeadCode(HOUSE_TAXHEAD);
 		houseEstimate.setCategory(Category.TAX);
-		houseEstimate.setEstimateAmount(detail.getHouseTax());
-		taxAmt=taxAmt.add(detail.getHouseTax());
+		BigDecimal houseTax = detail.getHouseTax().setScale(0, BigDecimal.ROUND_HALF_DOWN);
+		houseEstimate.setEstimateAmount(houseTax);
+		taxAmt=taxAmt.add(houseTax);
 		taxHeadEstimates.add(houseEstimate);
 		
 		//sewer tax
 		TaxHeadEstimate sewerEstimate = new TaxHeadEstimate();
 		sewerEstimate.setTaxHeadCode(SEWER_TAXHEAD);
 		sewerEstimate.setCategory(Category.TAX);
-		sewerEstimate.setEstimateAmount(detail.getSewerTax());
-		taxAmt=taxAmt.add(detail.getSewerTax());
+		BigDecimal sewerTax = detail.getSewerTax().setScale(0, BigDecimal.ROUND_HALF_DOWN);
+		sewerEstimate.setEstimateAmount(sewerTax);
+		taxAmt=taxAmt.add(sewerTax);
 		taxHeadEstimates.add(sewerEstimate);
+		
 		
 		Calculation calculation = Calculation.builder().fromDate(criteria.getFromDate())
 				.toDate(criteria.getToDate())
