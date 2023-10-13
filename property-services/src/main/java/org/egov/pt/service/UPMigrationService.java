@@ -548,12 +548,14 @@ public class UPMigrationService {
     	String ptUId = ptUniqueId;
     	if(ptUId.length()>=17)
     		return ptUId.substring(6, 16);
-    	else {
+    	else if(ptUId.length()<10){
     		 while (ptUId.length() < 9) {
     			 ptUId = "0" + ptUId;
     	        }
     		 return "5" + ptUId;
     	}
+    	else
+    		return ptUId.substring(0,10);
     }
  
     public void importPropertiesParallel(InputStream file, InputStream matchedFile, Long skip, Long limit) throws Exception {
