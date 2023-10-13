@@ -5,7 +5,10 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,6 +24,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.pt.config.PropertyConfiguration;
+import org.egov.pt.models.Assessment;
+import org.egov.pt.models.Assessment.Source;
 import org.egov.pt.models.OwnerInfo;
 import org.egov.pt.models.PropertyCriteria;
 import org.egov.pt.models.enums.Channel;
@@ -43,6 +48,7 @@ import org.egov.pt.repository.UnitExcelRepository;
 import org.egov.pt.repository.rowmapper.LegacyExcelRowMapper;
 import org.egov.pt.util.PTConstants;
 import org.egov.pt.util.PropertyUtil;
+import org.egov.pt.web.contracts.AssessmentRequest;
 import org.egov.pt.web.controllers.PropertyController;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,6 +98,9 @@ public class UPMigrationService {
     
     @Autowired
     private PropertyRepository propertyRepository;
+    
+    @Autowired
+	private AssessmentService assessmentService;
    
 
     private static final RequestInfo userCreateRequestInfo = RequestInfo.builder().action("_create").apiId("Rainmaker")
@@ -455,6 +464,29 @@ public class UPMigrationService {
                 payment.setLastpaymentdate(legacyRow.getLastPaymentDate());
                 propertyPaymentExcelRepository.save(payment);
                 failedCode = 5;
+                
+        //Property Assessment         
+          
+                RequestInfo AssessmentRequestinfo = RequestInfo.builder().authToken(token).action("token").apiId("Rainmaker")
+                        .did("1").key("").msgId("20170310130900|en_IN").ver(".01")
+                        .userInfo(org.egov.common.contract.request.User.builder().type(user.getType()).tenantId("up")
+                                .userName(user.getUserName()).uuid(user.getUuid()).roles(new ArrayList<>(Arrays.asList(Role.builder()
+                        				.code("CITIZEN").name("Citizen").build()))).build()).build();           
+                
+                Assessment assessment = Assessment.builder().tenantId(tenantId).propertyId(property.getPropertyid()).source(Source.MUNICIPAL_RECORDS)
+                		.channel(Channel.CFC_COUNTER).assessmentDate(new Timestamp(System.currentTimeMillis()).getTime())
+                		.financialYear(legacyRow.getFinancialYear()).build();
+                
+                AssessmentRequest assessmentReq = AssessmentRequest.builder().requestInfo(AssessmentRequestinfo)
+                		.assessment(assessment).build();
+                
+                Assessment assessmentRes = assessmentService.createAssessment(assessmentReq);
+                
+                if(assessmentRes !=null)
+                	log.info("Assessment done for property:"+property.getPropertyid());
+                else
+                	log.info("Assessment failed for property:"+property.getPropertyid());
+                
                 numOfSuccess.getAndIncrement();
             } catch (Exception e) {
                 numOfErrors.getAndIncrement();
@@ -472,7 +504,7 @@ public class UPMigrationService {
                 	unitExcelRepository.delete(unit);
                 	ownerExcelRepository.delete(owner);
                 	propertyExcelRepository.delete(property);
-                }else if( failedCode == 4)
+                }else if( failedCode == 4 || failedCode == 5)
                 {
                 	addressExcelRepository.delete(address);
                 	unitExcelRepository.delete(unit);
@@ -516,12 +548,14 @@ public class UPMigrationService {
     	String ptUId = ptUniqueId;
     	if(ptUId.length()>=17)
     		return ptUId.substring(6, 16);
-    	else {
+    	else if(ptUId.length()<10){
     		 while (ptUId.length() < 9) {
     			 ptUId = "0" + ptUId;
     	        }
     		 return "5" + ptUId;
     	}
+    	else
+    		return ptUId.substring(0,10);
     }
  
     public void importPropertiesParallel(InputStream file, InputStream matchedFile, Long skip, Long limit) throws Exception {
