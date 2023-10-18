@@ -41,6 +41,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 
+import java.net.URL;
+import java.net.URLConnection; 
+
 @Controller
 @RequestMapping("/property")
 public class PropertyController {
@@ -152,24 +155,42 @@ public class PropertyController {
 	// }
 
 	@PostMapping("/_import")
-	public ResponseEntity<?> propertyImport(@RequestParam(required = false) Long limit,
+	public ResponseEntity<?> propertyImport(@RequestParam(required = false) Long limit,@RequestParam(required = false) String fileStoreIds,
 			@RequestParam(required = false, defaultValue = "1") Long skip ,@RequestParam(required = false, defaultValue = "false") Boolean parallelProcessing ) throws Exception {
 		long startTime = System.nanoTime();
 		System.out.println("********skip="+skip+", *********limit="+limit);
-		final InputStream excelFile = loader.getResourceAsStream(config.getMigrationFileName());
+		
+//		final InputStream excelFile = loader.getResourceAsStream(config.getMigrationFileName());
+		
+//		// Create a URL object from the link
+		String fetchFile = upMigrationService.fetchFile(fileStoreIds);
+		URL url = new URL(fetchFile);
+//		
+//	 // Open a connection to the URL
+		URLConnection connection = url.openConnection();
+//	    
+//	    // Get an input stream from the connection
+		InputStream excelFile = connection.getInputStream();
 		
 		final InputStream matchedFile = loader.getResourceAsStream("matched.csv");
 	
+		Map<String, Object> importProperties = null;
+		
 		if(parallelProcessing)			
 		upMigrationService.importPropertiesParallel(excelFile, matchedFile, skip, limit);
 		else
-		upMigrationService.importProperties(excelFile, matchedFile, skip, limit);
+			importProperties = upMigrationService.importProperties(excelFile, matchedFile, skip, limit, fetchFile);
 		
 		long endtime = System.nanoTime();
 		long elapsetime = endtime - startTime;
 		System.out.println("Elapsed time--->" + elapsetime);
 
+		if(!(importProperties.isEmpty())) {
+			return new ResponseEntity<>(importProperties, HttpStatus.OK);
+		}
+		else {
 		return new ResponseEntity<>(true, HttpStatus.OK);
+		}
 	}
 	
 	@PostMapping("/_createboundaries")

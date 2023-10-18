@@ -359,4 +359,13 @@ public class PropertyConfiguration {
     @Value("${egov.ptms.data.migration.file}")
     private String PtmsDataMigrationFile;
     
+    @Value("${egov.filestore.host}")
+    private String filestoreHost;
+    
+    @Value("${egov.filestore.context.path}")
+    private String filestoreHostContextPath;
+    		
+    @Value("${egov.filestore.endpoint}")
+    private String filestoreEndpoint;
+    
 }
