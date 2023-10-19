@@ -13,8 +13,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -39,6 +41,7 @@ import org.egov.pt.models.excel.Unit;
 import org.egov.pt.models.user.User;
 import org.egov.pt.models.user.UserDetailResponse;
 import org.egov.pt.repository.AddressExcelRepository;
+import org.egov.pt.repository.GetServiceRequestRepository;
 import org.egov.pt.repository.OwnerExcelRepository;
 import org.egov.pt.repository.PropertyExcelRepository;
 import org.egov.pt.repository.PropertyPaymentExcelRepository;
@@ -53,6 +56,9 @@ import org.egov.pt.web.controllers.PropertyController;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.net.URL;
+import java.net.URLConnection;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -101,6 +107,9 @@ public class UPMigrationService {
     
     @Autowired
 	private AssessmentService assessmentService;
+    
+    @Autowired
+   	private GetServiceRequestRepository getServiceRequestRepository;
    
 
     private static final RequestInfo userCreateRequestInfo = RequestInfo.builder().action("_create").apiId("Rainmaker")
@@ -178,7 +187,7 @@ public class UPMigrationService {
         return user;
     }
 
-    public void importProperties(InputStream file, InputStream matchedFile, Long skip, Long limit) throws Exception {
+    public Map<String, Object> importProperties(InputStream file, InputStream matchedFile, Long skip, Long limit ,  String fetchFile) throws Exception {
 
         // Build matched usage type map
         BufferedReader br = new BufferedReader(new InputStreamReader(matchedFile));
@@ -197,7 +206,16 @@ public class UPMigrationService {
         HashMap<String, User>  existingUser = new HashMap<String, User>();
         final ClassLoader loader = PropertyController.class.getClassLoader();
 
-        final InputStream excelFile = loader.getResourceAsStream(config.getMigrationFileName());
+//        final InputStream excelFile = loader.getResourceAsStream(config.getMigrationFileName());
+        
+//		// Create a URL object from the link
+	    URL url = new URL(fetchFile);
+//		
+//	 // Open a connection to the URL
+	    URLConnection connection = url.openConnection();
+//	    
+//	    // Get an input stream from the connection
+	    InputStream excelFile = connection.getInputStream();
         
         List<String> PTMSUIdList = fetchPtmsUidFromDB();
         excelService.read(excelFile, skip, limit, (RowExcel row) -> {
@@ -526,6 +544,13 @@ public class UPMigrationService {
         });
         log.info("Import Completed - Success={} Errors={} SkippedRows={}", numOfSuccess, numOfErrors,skippedRows);
 //        excelService.writeToFileandClose();
+        
+  Map<String, Object> result = new HashMap<>();
+        
+        result.put("numOfSuccess", numOfSuccess);
+        result.put("numOfErrors", numOfErrors);
+        result.put("skippedRows", skippedRows);
+        return result ;
       
     }
     
@@ -923,6 +948,20 @@ System.out.println("listRootsLength:"+File.listRoots().length);
 		}
 	}
   
+	public String fetchFile(String fileStoreIds) {
+
+		StringBuilder uri = new StringBuilder(config.getFilestoreHost()).append(config.getFilestoreHostContextPath()).append(config.getFilestoreEndpoint()).append(fileStoreIds);
+
+		Optional<Object> fetchResult = getServiceRequestRepository.fetchResult(uri, null);
+		
+
+		LinkedHashMap<String, Object> responseMap = (LinkedHashMap<String, Object>) fetchResult.get();
+
+		String Result = (String) responseMap.get(fileStoreIds);
+
+		return Result;
+
+	}
     
     
 }
